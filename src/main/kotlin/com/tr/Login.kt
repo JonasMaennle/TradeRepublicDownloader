@@ -3,10 +3,8 @@ package com.tr
 import com.tr.model.LoginData
 import com.tr.model.LoginResponse
 import com.tr.model.TimeLineResponse
-import com.tr.service.HttpClientService
-import com.tr.service.TradeRepublicDownloadService
-import com.tr.utils.toCustomHeaders
-import com.tr.utils.transformCookiesToMap
+import com.tr.service.*
+import com.tr.utils.*
 import io.github.cdimascio.dotenv.Dotenv
 import io.github.oshai.kotlinlogging.KotlinLogging
 import okhttp3.Response
@@ -26,10 +24,9 @@ class Login {
     private fun initialLogin() {
         logger.info { "Starting Trade Republic 'Sparplan' downloader..." }
         val dotenv = Dotenv.configure().directory(".").load()
-        val phoneNumber = dotenv["PHONE"] ?: getUserInput("Please enter your phone number (e.g. +49123456789):")
-        val pin = dotenv["PIN"] ?: getUserInput("Please enter your four digit pin (e.g. 1234):", 4)
+        val phoneNumber = dotenv["PHONE"] ?: getUserInput("Please enter your phone number (e.g. +49123456789):") { it.length > 4 }
+        val pin = dotenv["PIN"] ?: getUserInput("Please enter your four digit pin (e.g. 1234):") { it.length == 4 }
 
-        // login
         val response: Response = clientService.postRequest(
             "https://api.traderepublic.com/api/v1/auth/web/login",
             LoginData(phoneNumber, pin)
@@ -42,27 +39,38 @@ class Login {
         twoFactorLogin(loginResponse)
     }
 
-    private fun getUserInput(prompt: String, expectedInputLength: Int? = null): String {
-        var response: String
-        do {
-            logger.info { prompt }
-            response = readln()
-        } while (expectedInputLength != null && response.length != expectedInputLength)
-        return response
-    }
-
     private fun twoFactorLogin(loginResponse: LoginResponse) {
         val twoFaCode = getUserInput(
-            "Please enter the four digit 2FA code you received on your phone (valid for ${loginResponse.countdownInSeconds} seconds):",
-            4
-        )
+            "Please enter the four digit 2FA code you received on your phone (valid for ${loginResponse.countdownInSeconds} seconds):"
+        ) { it.length == 4 }
+
+        val documentInput = getUserInput(
+            "Please enter the document type you're looking for, 'D' for Dividende or 'S' for Sparplan or 'Z' for Zinsen:"
+        ) { it == "D" || it == "S" || it == "Z"}
 
         val twoFaResponse = clientService.postRequest<String>("https://api.traderepublic.com/api/v1/auth/web/login/${loginResponse.processId}/$twoFaCode")
         val customHeaders = twoFaResponse.headers.toCustomHeaders()
         val map = transformCookiesToMap(customHeaders.setCookies)
         val sessionToken = map["tr_session"] ?: throw Exception("No session cookie received")
 
-        // start ws connections
-        TradeRepublicDownloadService<TimeLineResponse>(sessionToken).fetchTimeline(TimeLineResponse::class.java)
+        TradeRepublicDownloadService<TimeLineResponse>(sessionToken, getEventFilter(documentInput)).fetchTimeline(TimeLineResponse::class.java)
+    }
+
+    private fun getEventFilter(documentInput: String): EventFilter {
+        return when (documentInput) {
+            "D" -> { EventFilter(DividendFilter) }
+            "S" -> { EventFilter(SavingPlanFilter) }
+            "Z" -> { EventFilter(InterestFilter) }
+            else -> { throw IllegalStateException("Invalid document type") }
+        }
+    }
+
+    private fun getUserInput(prompt: String, validation: (String) -> Boolean): String {
+        var response: String
+        do {
+            logger.info { prompt }
+            response = readln()
+        } while (!validation(response))
+        return response
     }
 }

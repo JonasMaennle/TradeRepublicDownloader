@@ -26,7 +26,7 @@ class WebSocketService<T>(private val clazz: Class<T>, private val callback: Web
     private fun connect() {
         val request = Request.Builder().url(apiEndpoint).build()
         ws = OkHttpClient().newWebSocket(request, this)
-        logger.debug { "Connected to Socket" }
+        logger.trace { "Connected to Socket" }
         openChannel()
     }
 
@@ -54,6 +54,7 @@ class WebSocketService<T>(private val clazz: Class<T>, private val callback: Web
                 ws?.cancel()
             }
             try {
+                logger.debug { data }
                 callback.onResponseReceived(objectMapper.readValue(data, clazz))
             } catch (_: Exception) { }
         }

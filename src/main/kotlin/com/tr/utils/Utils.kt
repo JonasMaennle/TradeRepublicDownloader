@@ -3,6 +3,7 @@ package com.tr.utils
 import com.tr.model.CustomHeaders
 import okhttp3.Headers
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 fun transformCookiesToMap(setCookies: List<String>): Map<String, String> {
@@ -28,12 +29,25 @@ fun Headers.toCustomHeaders(): CustomHeaders {
     return CustomHeaders(date, contentLength, vary, setCookies)
 }
 
-fun isInCurrentMonth(dateString: String): Boolean {
-    val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
-    val date = LocalDate.parse(dateString, formatter)
+fun isInCurrentMonth(dateString: String, pattern: Pattern = Pattern.FULL): Boolean {
+    val formatter = DateTimeFormatter.ofPattern(pattern.patternString)
 
-    val currentMonth = LocalDate.now().month
-    val entryMonth = date.month
+    return when (pattern) {
+        Pattern.FULL -> {
+            val date = LocalDate.parse(dateString, formatter)
+            val currentMonth = LocalDate.now().month
+            val entryMonth = date.month
+            currentMonth == entryMonth
+        }
+        Pattern.PARTIAL -> {
+            val parsedDate = YearMonth.parse(dateString, formatter)
+            val currentDate = YearMonth.now()
+            parsedDate == currentDate
+        }
+    }
+}
 
-    return currentMonth == entryMonth
+enum class Pattern(val patternString: String) {
+    FULL("dd.MM.yyyy"),
+    PARTIAL("yyyy-MM")
 }

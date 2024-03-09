@@ -37,15 +37,15 @@ data class TimelineEvent(
 )
 
 data class TimelineEventData(
-    val id: String?,
-    val timestamp: Long?,
-    val icon: String?,
-    val title: String?,
-    val body: String?,
-    val cashChangeAmount: Double?,
-    val action: Action?,
-    val attributes: List<Any>?,
-    val month: String?
+    val id: String,
+    val timestamp: Long,
+    val icon: String,
+    val title: String,
+    val body: String,
+    val cashChangeAmount: Double,
+    val action: Action?, // not available for "Einzahlung"
+    val attributes: List<Any>,
+    val month: String
 )
 
 data class Action(
@@ -62,6 +62,7 @@ data class TimelineDetailResponse(
 
 data class TimelineDetail(
     val type: String,
+    val title: String,
     val documents: List<Document>?
 )
 

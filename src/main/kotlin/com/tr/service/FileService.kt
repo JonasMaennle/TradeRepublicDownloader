@@ -10,17 +10,12 @@ class FileService {
     private val folderPath = jarPath.resolve(folderName)
     private val logger = KotlinLogging.logger {}
     private var downloadCounter: Int = 0
-    private val fileNameMap: MutableMap<String, String> = mutableMapOf()
 
     init {
         createFolderIfNotExist()
     }
 
     fun downloadFile(url: String, fileName: String) {
-        if (fileHasBeenDownloaded(url, fileName)) {
-            logger.debug { "File already downloaded" }
-            return
-        }
         try {
             val fileUrl = URL(url)
             val filePath = folderPath.resolve("$fileName.pdf")
@@ -28,20 +23,11 @@ class FileService {
             Files.copy(fileUrl.openStream(), filePath, StandardCopyOption.REPLACE_EXISTING)
             downloadCounter++
             println()
-            logger.info { "File '$fileName' downloaded successfully to '$filePath'" }
-            logger.info { "Downloaded $downloadCounter files successfully." }
+            logger.info { "File '$fileName' downloaded to '$filePath'" }
+            logger.info { "Downloaded $downloadCounter file(s) successfully." }
         } catch (e: Exception) {
             logger.error { "Error downloading file: ${e.message}" }
         }
-    }
-
-    private fun fileHasBeenDownloaded(url: String, fileName: String): Boolean {
-        val entry = fileNameMap[fileName]
-        if (entry == null) {
-            fileNameMap[fileName] = url
-            return false
-        }
-        return true
     }
 
     private fun createFolderIfNotExist() {
