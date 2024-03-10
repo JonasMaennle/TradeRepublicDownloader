@@ -6,7 +6,7 @@ And also to practice some Kotlin...
 You need JRE 11 or higher installed.
 
 ## Limitations
-The tool just works at the moment for **de** locale.</br>
+This tool just works for **de** locale.</br>
 
 ## Run the Application
 Build project with Maven:
