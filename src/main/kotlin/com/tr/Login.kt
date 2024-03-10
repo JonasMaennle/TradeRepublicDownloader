@@ -51,7 +51,7 @@ class Login {
         val twoFaResponse = clientService.postRequest<String>("https://api.traderepublic.com/api/v1/auth/web/login/${loginResponse.processId}/$twoFaCode")
         val customHeaders = twoFaResponse.headers.toCustomHeaders()
         val map = transformCookiesToMap(customHeaders.setCookies)
-        val sessionToken = map["tr_session"] ?: throw Exception("No session cookie received")
+        val sessionToken = map["tr_session"] ?: throw Exception("Invalid Code. No session cookie received")
 
         TradeRepublicDownloadService(sessionToken, getEventFilter(documentInput))
             .createNewSubRequest(TimelineRequest(sessionToken))

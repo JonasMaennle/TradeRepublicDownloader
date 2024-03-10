@@ -8,6 +8,7 @@ data class ConnectRequest(
 
 data class TimelineRequest(
     val token: String,
+    val after: String? = null,
     val type: String = "timeline"
 ) : TRRequest
 

@@ -13,8 +13,8 @@ data class LoginResponse(
 )
 
 data class Cursors(
-    val before: String,
-    val after: String
+    val before: String?,
+    val after: String?
 )
 
 data class TimelineEvent(
@@ -24,19 +24,15 @@ data class TimelineEvent(
 
 data class TimelineEventData(
     val id: String,
-    val timestamp: Long,
-    val icon: String,
     val title: String,
-    val body: String,
-    val cashChangeAmount: Double,
+    val body: String?,
     val action: Action?, // not available for "Einzahlung"
-    val attributes: List<Any>,
-    val month: String
+    val month: String?
 )
 
 data class Action(
     val type: String,
-    val payload: String
+    val payload: Any?
 )
 
 data class TimelineDetail(

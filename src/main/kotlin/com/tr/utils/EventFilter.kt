@@ -41,7 +41,7 @@ class EventFilter(private val filter: Filter) {
 
     private fun applyFilter(data: List<TimelineEvent>, identifier: String): List<String> {
         return data
-            .filter { it.data.body.contains(identifier) && isInCurrentMonth(it.data.month, Pattern.PARTIAL) }
+            .filter { it.data.body?.contains(identifier) ?: false && isInCurrentMonth(it.data.month, Pattern.PARTIAL) }
             .map { it.data.id }
     }
 }

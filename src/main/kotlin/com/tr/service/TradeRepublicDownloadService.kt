@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.tr.model.request.TRRequest
 import com.tr.model.request.TimelineDetailRequest
+import com.tr.model.request.TimelineRequest
 import com.tr.model.response.*
 import com.tr.utils.EventFilter
 import com.tr.utils.getUserInput
@@ -22,6 +23,12 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
     private val webSocketService = WebSocketService(this, objectMapper)
     private var documentsExpected = 0
     private var documentsReceived = 0
+    private var timelineReceivedCounter = 0
+    private val filteredTimelineEventIds: MutableList<String> = mutableListOf()
+
+    companion object {
+        private const val MAXIMUM_TIMELINES_COUNT = 10
+    }
 
     fun createNewSubRequest(tRRequest: TRRequest) {
         webSocketService.sub(objectMapper.writeValueAsString(tRRequest))
@@ -32,7 +39,15 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
             is TimelineResponse -> {
                 logger.debug { "Received timeline event" }
                 // filter for events with selected document type
-                val filteredTimelineEventIds = eventFilter.applyTimelineEventFilter(response.data)
+                filteredTimelineEventIds.addAll(eventFilter.applyTimelineEventFilter(response.data))
+
+                // fetch older timeline entries -> one request contains 30 entries, requesting MAXIMUM_TIMELINES_COUNT timelines
+                if (!response.cursors.after.isNullOrEmpty() && timelineReceivedCounter < MAXIMUM_TIMELINES_COUNT) {
+                    timelineReceivedCounter++
+                    createNewSubRequest(TimelineRequest(sessionToken, response.cursors.after))
+                    return
+                }
+
                 documentsExpected = filteredTimelineEventIds.size
                 if (documentsExpected == 0) {
                     logger.info { "No matching documents found in you timeline" }
@@ -40,6 +55,7 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
                 }
                 filteredTimelineEventIds.forEach { this.createNewSubRequest(TimelineDetailRequest(sessionToken, it)) }
             }
+
             is TimelineDetailResponse -> {
                 logger.debug { "Received timeline detail event" }
                 val document: Document = response.sections
@@ -49,7 +65,7 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
 
                 documentsReceived++
                 fileService.downloadFile(
-                    document.action.payload,
+                    document.action.payload as String,
                     eventFilter.fileNameBuilder(document, response),
                     DownloadProgress(documentsReceived, documentsExpected)
                 )

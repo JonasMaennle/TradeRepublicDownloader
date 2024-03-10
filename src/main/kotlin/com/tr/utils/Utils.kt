@@ -39,7 +39,8 @@ fun getUserInput(prompt: String, logger: KLogger, validation: (String) -> Boolea
     return response
 }
 
-fun isInCurrentMonth(dateString: String, pattern: Pattern = Pattern.FULL): Boolean {
+fun isInCurrentMonth(dateString: String?, pattern: Pattern = Pattern.FULL): Boolean {
+    if (dateString.isNullOrEmpty()) return false
     val formatter = DateTimeFormatter.ofPattern(pattern.patternString)
 
     return when (pattern) {
