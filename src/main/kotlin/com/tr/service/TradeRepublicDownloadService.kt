@@ -3,6 +3,7 @@ package com.tr.service
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.tr.model.DownloadProgress
 import com.tr.model.request.TRRequest
 import com.tr.model.request.TimelineDetailRequest
 import com.tr.model.request.TimelineRequest
@@ -55,7 +56,7 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
                 val document: Document = response.sections
                     .filter { it.documents != null }
                     .flatMap { it.documents!! }
-                    .find { eventFilter.isInSelectedMonth(it.detail) } ?: throw IllegalStateException("No document for current moth received")
+                    .find { eventFilter.isInSelectedMonth(it.detail) } ?: throw IllegalStateException("No document received")
 
                 documentsReceived++
                 fileService.downloadFile(

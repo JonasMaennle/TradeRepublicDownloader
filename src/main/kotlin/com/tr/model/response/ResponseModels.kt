@@ -1,21 +1,18 @@
 package com.tr.model.response
 
-data class CustomHeaders(
-    val date: String?,
-    val contentLength: Int?,
-    val vary: List<String>,
-    val setCookies: List<String>
-)
+interface ExpectedResponse
 
-data class LoginResponse(
-    val processId: String,
-    val countdownInSeconds: Int
-)
+data class TimelineResponse(
+    val data: List<TimelineEvent>,
+    val cursors: Cursors
+) : ExpectedResponse
 
-data class Cursors(
-    val before: String?,
-    val after: String?
-)
+data class TimelineDetailResponse(
+    val id: String,
+    val titleText: String,
+    val subtitleText: String,
+    val sections: List<TimelineDetail>
+) : ExpectedResponse
 
 data class TimelineEvent(
     val type: String,
@@ -28,11 +25,6 @@ data class TimelineEventData(
     val body: String?,
     val action: Action?, // not available for "Einzahlung"
     val month: String?
-)
-
-data class Action(
-    val type: String,
-    val payload: Any?
 )
 
 data class TimelineDetail(
@@ -48,21 +40,17 @@ data class Document(
     val id: String
 )
 
-data class DownloadProgress(
-    val current: Int,
-    val total: Int
+data class Action(
+    val type: String,
+    val payload: Any?
 )
 
-data class TimelineResponse(
-    val data: List<TimelineEvent>,
-    val cursors: Cursors
-) : ExpectedResponse
+data class Cursors(
+    val before: String?,
+    val after: String?
+)
 
-data class TimelineDetailResponse(
-    val id: String,
-    val titleText: String,
-    val subtitleText: String,
-    val sections: List<TimelineDetail>
-) : ExpectedResponse
-
-interface ExpectedResponse
+data class LoginResponse(
+    val processId: String,
+    val countdownInSeconds: Int
+)

@@ -1,6 +1,6 @@
 package com.tr.service
 
-import com.tr.model.response.DownloadProgress
+import com.tr.model.DownloadProgress
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.net.URL
 import java.nio.file.*

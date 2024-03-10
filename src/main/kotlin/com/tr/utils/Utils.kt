@@ -1,6 +1,7 @@
 package com.tr.utils
 
-import com.tr.model.response.CustomHeaders
+import com.tr.model.CustomHeaders
+import com.tr.model.Pattern
 import io.github.oshai.kotlinlogging.KLogger
 import okhttp3.Headers
 import java.time.LocalDate
@@ -59,9 +60,4 @@ fun isMonthValid(dateString: String): Boolean {
     } catch (_: DateTimeParseException){
         false
     }
-}
-
-enum class Pattern(val patternString: String) {
-    FULL("dd.MM.yyyy"),
-    PARTIAL("yyyy-MM")
 }

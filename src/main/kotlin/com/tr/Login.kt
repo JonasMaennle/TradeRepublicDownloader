@@ -1,5 +1,6 @@
 package com.tr
 
+import com.tr.model.Pattern
 import com.tr.model.response.LoginResponse
 import com.tr.model.request.LoginRequest
 import com.tr.model.request.TimelineRequest
