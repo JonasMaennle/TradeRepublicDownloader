@@ -1,44 +1,40 @@
 package com.tr.websocket
 
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.tr.model.ConnectPayload
+import com.tr.model.request.ConnectRequest
+import com.tr.model.response.TimelineDetailResponse
+import com.tr.model.response.TimelineResponse
+import com.tr.service.TradeRepublicDownloadService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 
-class WebSocketService<T>(private val clazz: Class<T>, private val callback: WebSocketCallback<T>) : WebSocketListener() {
-    private var ws: WebSocket? = null
+class WebSocketService(
+    private val callback: TradeRepublicDownloadService,
+    private val objectMapper: ObjectMapper
+) : WebSocketListener() {
+    companion object {
+        private val TARGET_CLASSES = listOf(TimelineResponse::class.java, TimelineDetailResponse::class.java)
+        private var LOCALE = "de"
+        private var API_ENDPOINT = "wss://api.traderepublic.com"
+    }
+
+    private var ws: WebSocket
     private var subCounter = 1
-    private var locale = "de"
-    private var apiEndpoint = "wss://api.traderepublic.com"
-    private val objectMapper: ObjectMapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).configure(
-        DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
     private val logger = KotlinLogging.logger {}
 
     init {
-        connect()
-    }
-
-    private fun connect() {
-        val request = Request.Builder().url(apiEndpoint).build()
+        val request = Request.Builder().url(API_ENDPOINT).build()
         ws = OkHttpClient().newWebSocket(request, this)
-        logger.trace { "Connected to Socket" }
-        openChannel()
-    }
-
-    private fun openChannel() {
-        val payload = ConnectPayload(locale)
-        val jsonPayload = objectMapper.writeValueAsString(payload)
-        send("connect 26 $jsonPayload")
+        logger.trace { "Connecting to Socket" }
+        send("connect 31 ${objectMapper.writeValueAsString(ConnectRequest(LOCALE))}")
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
         super.onMessage(webSocket, text)
-        logger.trace { "onMessage text has been called: $text" }
+        logger.debug { "onMessage text has been called: $text" }
         handleMessage(text)
     }
 
@@ -46,17 +42,24 @@ class WebSocketService<T>(private val clazz: Class<T>, private val callback: Web
         if (text == "connected") {
             logger.trace { "connected" }
         } else {
-            val data = text.substring(4)
             val subId = text.substring(0,1)
             val type = text.substring(2,3)
             if (type == "C") {
                 unsubscribe(subId)
-                ws?.cancel()
+                return
             }
-            try {
-                logger.debug { data }
-                callback.onResponseReceived(objectMapper.readValue(data, clazz))
-            } catch (_: Exception) { }
+
+            val data = text.substring(4)
+            for (targetClass in TARGET_CLASSES) {
+                try {
+                    val response = objectMapper.readValue(data, targetClass)
+                    callback.onResponseReceived(response)
+                    break
+                } catch (_: Exception) {
+                } finally {
+                    logger.debug { data }
+                }
+            }
         }
     }
 
@@ -71,11 +74,15 @@ class WebSocketService<T>(private val clazz: Class<T>, private val callback: Web
     }
 
     private fun send(msg: String) {
-        ws?.send(msg)
-        logger.trace { "_send message: $msg" }
+        ws.send(msg)
+        logger.debug { "_send message: $msg" }
     }
 
     private fun getNextSubId(): Int {
         return subCounter++
+    }
+
+    fun disconnect() {
+        ws.close(1000, "Connection closed normally")
     }
 }

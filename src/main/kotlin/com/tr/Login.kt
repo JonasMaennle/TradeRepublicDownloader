@@ -1,8 +1,8 @@
 package com.tr
 
-import com.tr.model.LoginData
-import com.tr.model.LoginResponse
-import com.tr.model.TimeLineResponse
+import com.tr.model.response.LoginResponse
+import com.tr.model.request.LoginRequest
+import com.tr.model.request.TimelineRequest
 import com.tr.service.*
 import com.tr.utils.*
 import io.github.cdimascio.dotenv.Dotenv
@@ -29,7 +29,7 @@ class Login {
 
         val response: Response = clientService.postRequest(
             "https://api.traderepublic.com/api/v1/auth/web/login",
-            LoginData(phoneNumber, pin)
+            LoginRequest(phoneNumber, pin)
         )
         if (response.code != 200) {
             throw Exception("Code: ${response.code} Message: ${response.message}")
@@ -53,7 +53,8 @@ class Login {
         val map = transformCookiesToMap(customHeaders.setCookies)
         val sessionToken = map["tr_session"] ?: throw Exception("No session cookie received")
 
-        TradeRepublicDownloadService<TimeLineResponse>(sessionToken, getEventFilter(documentInput)).fetchTimeline(TimeLineResponse::class.java)
+        TradeRepublicDownloadService(sessionToken, getEventFilter(documentInput))
+            .createNewSubRequest(TimelineRequest(sessionToken))
     }
 
     private fun getEventFilter(documentInput: String): EventFilter {

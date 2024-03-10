@@ -1,8 +1,8 @@
 package com.tr.utils
 
-import com.tr.model.Document
-import com.tr.model.TimelineDetailResponse
-import com.tr.model.TimelineEvent
+import com.tr.model.response.Document
+import com.tr.model.response.TimelineDetailResponse
+import com.tr.model.response.TimelineEvent
 
 sealed class Filter
 data object SavingPlanFilter : Filter()

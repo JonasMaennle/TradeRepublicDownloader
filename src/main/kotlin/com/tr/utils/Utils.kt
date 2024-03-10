@@ -1,6 +1,6 @@
 package com.tr.utils
 
-import com.tr.model.CustomHeaders
+import com.tr.model.response.CustomHeaders
 import okhttp3.Headers
 import java.time.LocalDate
 import java.time.YearMonth

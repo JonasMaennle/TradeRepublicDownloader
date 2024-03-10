@@ -1,30 +1,28 @@
 package com.tr.service
 
+import com.tr.model.response.DownloadProgress
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.net.URL
 import java.nio.file.*
 
 class FileService {
-    private val jarPath = getJarDirectory()
     private val folderName = "Trade Republic Downloads"
-    private val folderPath = jarPath.resolve(folderName)
+    private val folderPath = getJarDirectory().resolve(folderName)
     private val logger = KotlinLogging.logger {}
-    private var downloadCounter: Int = 0
 
     init {
         createFolderIfNotExist()
     }
 
-    fun downloadFile(url: String, fileName: String) {
+    fun downloadFile(url: String, fileName: String, downloadProgress: DownloadProgress) {
         try {
             val fileUrl = URL(url)
             val filePath = folderPath.resolve("$fileName.pdf")
 
             Files.copy(fileUrl.openStream(), filePath, StandardCopyOption.REPLACE_EXISTING)
-            downloadCounter++
             println()
             logger.info { "File '$fileName' downloaded to '$filePath'" }
-            logger.info { "Downloaded $downloadCounter file(s) successfully." }
+            logger.info { "Downloaded (${downloadProgress.current}/${downloadProgress.total}) file(s) successfully." }
         } catch (e: Exception) {
             logger.error { "Error downloading file: ${e.message}" }
         }
