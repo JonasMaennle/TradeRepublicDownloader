@@ -24,8 +24,8 @@ class Login {
     private fun initialLogin() {
         logger.info { "Starting Trade Republic 'Sparplan' downloader..." }
         val dotenv = Dotenv.configure().directory(".").load()
-        val phoneNumber = dotenv["PHONE"] ?: getUserInput("Please enter your phone number (e.g. +49123456789):") { it.length > 4 }
-        val pin = dotenv["PIN"] ?: getUserInput("Please enter your four digit pin (e.g. 1234):") { it.length == 4 }
+        val phoneNumber = dotenv["PHONE"] ?: getUserInput("Please enter your phone number (e.g. +49123456789):", logger) { it.length > 4 }
+        val pin = dotenv["PIN"] ?: getUserInput("Please enter your four digit pin (e.g. 1234):", logger) { it.length == 4 }
 
         val response: Response = clientService.postRequest(
             "https://api.traderepublic.com/api/v1/auth/web/login",
@@ -41,11 +41,11 @@ class Login {
 
     private fun twoFactorLogin(loginResponse: LoginResponse) {
         val twoFaCode = getUserInput(
-            "Please enter the four digit 2FA code you received on your phone (valid for ${loginResponse.countdownInSeconds} seconds):"
+            "Please enter the four digit 2FA code you received on your phone (valid for ${loginResponse.countdownInSeconds} seconds):", logger
         ) { it.length == 4 }
 
         val documentInput = getUserInput(
-            "Please enter the document type you're looking for, 'D' for Dividende or 'S' for Sparplan or 'Z' for Zinsen:"
+            "Please enter the document type you're looking for, 'D' for Dividende or 'S' for Sparplan or 'Z' for Zinsen:", logger
         ) { it == "D" || it == "S" || it == "Z"}
 
         val twoFaResponse = clientService.postRequest<String>("https://api.traderepublic.com/api/v1/auth/web/login/${loginResponse.processId}/$twoFaCode")
@@ -64,14 +64,5 @@ class Login {
             "Z" -> { EventFilter(InterestFilter) }
             else -> { throw IllegalStateException("Invalid document type") }
         }
-    }
-
-    private fun getUserInput(prompt: String, validation: (String) -> Boolean): String {
-        var response: String
-        do {
-            logger.info { prompt }
-            response = readln()
-        } while (!validation(response))
-        return response
     }
 }

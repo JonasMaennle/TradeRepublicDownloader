@@ -1,6 +1,7 @@
 package com.tr.utils
 
 import com.tr.model.response.CustomHeaders
+import io.github.oshai.kotlinlogging.KLogger
 import okhttp3.Headers
 import java.time.LocalDate
 import java.time.YearMonth
@@ -27,6 +28,15 @@ fun Headers.toCustomHeaders(): CustomHeaders {
     val setCookies = values("set-cookie")
 
     return CustomHeaders(date, contentLength, vary, setCookies)
+}
+
+fun getUserInput(prompt: String, logger: KLogger, validation: (String) -> Boolean): String {
+    var response: String
+    do {
+        logger.info { prompt }
+        response = readln()
+    } while (!validation(response))
+    return response
 }
 
 fun isInCurrentMonth(dateString: String, pattern: Pattern = Pattern.FULL): Boolean {

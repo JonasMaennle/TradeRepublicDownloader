@@ -7,6 +7,7 @@ import com.tr.model.request.TRRequest
 import com.tr.model.request.TimelineDetailRequest
 import com.tr.model.response.*
 import com.tr.utils.EventFilter
+import com.tr.utils.getUserInput
 import com.tr.utils.isInCurrentMonth
 import com.tr.websocket.WebSocketCallback
 import com.tr.websocket.WebSocketService
@@ -49,14 +50,17 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
                     DownloadProgress(documentsReceived, documentsExpected)
                 )
 
-                // end application
-                if (documentsExpected == documentsReceived) {
-                    webSocketService.disconnect()
-                    println()
-                    logger.info { "Job finished successful. See you next time :)" }
-                    exitProcess(0)
-                }
+                if (documentsReceived == documentsExpected) terminateApplication()
             }
         }
+    }
+
+    private fun terminateApplication() {
+        webSocketService.disconnect()
+        println()
+        logger.info { "Job finished successful. See you next time :)" }
+
+        getUserInput("Enter 'q' to end the application:", logger) { it == "q" }
+        exitProcess(0)
     }
 }
