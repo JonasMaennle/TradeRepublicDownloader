@@ -16,8 +16,9 @@ Build project with Maven:
 mvn clean install
 ```
 
-Start the commandline tool:
+Start the application with the generated .exe in ```./target```
+
+Or start the commandline tool as jar:
 ```shell
 java -jar .\target\TradeRepublicDownloader-1.0-jar-with-dependencies.jar
 ```
-
