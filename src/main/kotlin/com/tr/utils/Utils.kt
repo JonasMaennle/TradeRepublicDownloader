@@ -61,3 +61,11 @@ fun isMonthValid(dateString: String): Boolean {
         false
     }
 }
+
+fun reverseDate(dateString: String): String {
+    val originalFormatter = DateTimeFormatter.ofPattern(Pattern.FULL.patternString)
+    val date = LocalDate.parse(dateString, originalFormatter)
+
+    val desiredFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
+    return date.format(desiredFormatter).toString()
+}

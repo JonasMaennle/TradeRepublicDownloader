@@ -1,10 +1,9 @@
-package com.tr
+package com.tr.service
 
 import com.tr.model.Pattern
 import com.tr.model.response.LoginResponse
 import com.tr.model.request.LoginRequest
 import com.tr.model.request.TimelineRequest
-import com.tr.service.*
 import com.tr.utils.*
 import io.github.cdimascio.dotenv.Dotenv
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -12,10 +11,6 @@ import okhttp3.Response
 import java.lang.Exception
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-
-fun main() {
-    Login()
-}
 
 class Login {
     private val logger = KotlinLogging.logger {}

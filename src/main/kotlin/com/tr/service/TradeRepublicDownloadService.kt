@@ -3,7 +3,6 @@ package com.tr.service
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.tr.Login
 import com.tr.model.DownloadProgress
 import com.tr.model.request.TRRequest
 import com.tr.model.request.TimelineDetailRequest
@@ -76,7 +75,7 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
         println()
         logger.info { "Job finished successful :)" }
 
-        val userInput = getUserInput("Enter 'q' to close the application or 'c' to start another request:", logger) { it == "q" || it == "c" }
+        val userInput = getUserInput("Enter 'q' to close the application or 'c' to start another query:", logger) { it == "q" || it == "c" }
         if (userInput == "q") exitProcess(0)
 
         login.processUserInput(sessionToken) // maybe refresh session token
