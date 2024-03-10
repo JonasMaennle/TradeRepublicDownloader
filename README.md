@@ -7,7 +7,6 @@ You need JRE 11 or higher installed.
 
 ## Limitations
 The tool just works at the moment for **de** locale.</br>
-The tool will only download files of the **current month**.
 
 ## Run the Application
 Build project with Maven:

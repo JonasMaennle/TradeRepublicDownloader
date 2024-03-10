@@ -9,7 +9,6 @@ import com.tr.model.request.TimelineRequest
 import com.tr.model.response.*
 import com.tr.utils.EventFilter
 import com.tr.utils.getUserInput
-import com.tr.utils.isInCurrentMonth
 import com.tr.websocket.WebSocketCallback
 import com.tr.websocket.WebSocketService
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -26,10 +25,6 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
     private var timelineReceivedCounter = 0
     private val filteredTimelineEventIds: MutableList<String> = mutableListOf()
 
-    companion object {
-        private const val MAXIMUM_TIMELINES_COUNT = 10
-    }
-
     fun createNewSubRequest(tRRequest: TRRequest) {
         webSocketService.sub(objectMapper.writeValueAsString(tRRequest))
     }
@@ -38,11 +33,10 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
         when (response) {
             is TimelineResponse -> {
                 logger.debug { "Received timeline event" }
-                // filter for events with selected document type
                 filteredTimelineEventIds.addAll(eventFilter.applyTimelineEventFilter(response.data))
 
-                // fetch older timeline entries -> one request contains 30 entries, requesting MAXIMUM_TIMELINES_COUNT timelines
-                if (!response.cursors.after.isNullOrEmpty() && timelineReceivedCounter < MAXIMUM_TIMELINES_COUNT) {
+                // fetch older timeline entries -> one request contains 30 entries
+                if (!response.cursors.after.isNullOrEmpty() && eventFilter.isTimelineInDateRange(response)) {
                     timelineReceivedCounter++
                     createNewSubRequest(TimelineRequest(sessionToken, response.cursors.after))
                     return
@@ -50,7 +44,7 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
 
                 documentsExpected = filteredTimelineEventIds.size
                 if (documentsExpected == 0) {
-                    logger.info { "No matching documents found in you timeline" }
+                    logger.info { "No matching documents found in your timeline" }
                     terminateApplication()
                 }
                 filteredTimelineEventIds.forEach { this.createNewSubRequest(TimelineDetailRequest(sessionToken, it)) }
@@ -61,7 +55,7 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
                 val document: Document = response.sections
                     .filter { it.documents != null }
                     .flatMap { it.documents!! }
-                    .find { isInCurrentMonth(it.detail) } ?: throw IllegalStateException("No document for current moth received")
+                    .find { eventFilter.isInSelectedMonth(it.detail) } ?: throw IllegalStateException("No document for current moth received")
 
                 documentsReceived++
                 fileService.downloadFile(
@@ -80,7 +74,7 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
         println()
         logger.info { "Job finished successful. See you next time :)" }
 
-        getUserInput("Enter 'q' to end the application:", logger) { it == "q" }
+        getUserInput("Enter 'q' to close the application:", logger) { it == "q" }
         exitProcess(0)
     }
 }

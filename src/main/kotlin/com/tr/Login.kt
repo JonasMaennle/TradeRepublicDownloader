@@ -9,6 +9,8 @@ import io.github.cdimascio.dotenv.Dotenv
 import io.github.oshai.kotlinlogging.KotlinLogging
 import okhttp3.Response
 import java.lang.Exception
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 
 fun main() {
     Login()
@@ -43,25 +45,31 @@ class Login {
         val twoFaCode = getUserInput(
             "Please enter the four digit 2FA code you received on your phone (valid for ${loginResponse.countdownInSeconds} seconds):", logger
         ) { it.length == 4 }
-
         val documentInput = getUserInput(
             "Please enter the document type you're looking for, 'D' for Dividende or 'S' for Sparplan or 'Z' for Zinsen:", logger
-        ) { it == "D" || it == "S" || it == "Z"}
+        ) { it == "D" || it == "S" || it == "Z" }
+        var selectedMonth = getUserInput(
+            "Please enter year and month you are interested in (e.g. 2024-03). Or leave it empty for using the current month:", logger
+        ) { isMonthValid(it) || it.isEmpty() }
+        if (selectedMonth.isEmpty()) {
+            selectedMonth = getCurrentMonth(Pattern.PARTIAL)
+        }
+        val selectedMonthDate = YearMonth.parse(selectedMonth, DateTimeFormatter.ofPattern(Pattern.PARTIAL.patternString))
 
         val twoFaResponse = clientService.postRequest<String>("https://api.traderepublic.com/api/v1/auth/web/login/${loginResponse.processId}/$twoFaCode")
         val customHeaders = twoFaResponse.headers.toCustomHeaders()
         val map = transformCookiesToMap(customHeaders.setCookies)
         val sessionToken = map["tr_session"] ?: throw Exception("Invalid Code. No session cookie received")
 
-        TradeRepublicDownloadService(sessionToken, getEventFilter(documentInput))
+        TradeRepublicDownloadService(sessionToken, getEventFilter(documentInput, selectedMonthDate))
             .createNewSubRequest(TimelineRequest(sessionToken))
     }
 
-    private fun getEventFilter(documentInput: String): EventFilter {
+    private fun getEventFilter(documentInput: String, selectedMonth: YearMonth): EventFilter {
         return when (documentInput) {
-            "D" -> { EventFilter(DividendFilter) }
-            "S" -> { EventFilter(SavingPlanFilter) }
-            "Z" -> { EventFilter(InterestFilter) }
+            "D" -> { EventFilter(DividendFilter, selectedMonth) }
+            "S" -> { EventFilter(SavingPlanFilter, selectedMonth) }
+            "Z" -> { EventFilter(InterestFilter, selectedMonth) }
             else -> { throw IllegalStateException("Invalid document type") }
         }
     }

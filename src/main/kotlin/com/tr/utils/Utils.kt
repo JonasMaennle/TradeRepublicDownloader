@@ -6,6 +6,7 @@ import okhttp3.Headers
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 fun transformCookiesToMap(setCookies: List<String>): Map<String, String> {
     val cookiesMap = mutableMapOf<String, String>()
@@ -39,22 +40,24 @@ fun getUserInput(prompt: String, logger: KLogger, validation: (String) -> Boolea
     return response
 }
 
-fun isInCurrentMonth(dateString: String?, pattern: Pattern = Pattern.FULL): Boolean {
-    if (dateString.isNullOrEmpty()) return false
-    val formatter = DateTimeFormatter.ofPattern(pattern.patternString)
-
+fun getCurrentMonth(pattern: Pattern): String {
     return when (pattern) {
         Pattern.FULL -> {
-            val date = LocalDate.parse(dateString, formatter)
-            val currentMonth = LocalDate.now().month
-            val entryMonth = date.month
-            currentMonth == entryMonth
+            LocalDate.now().month.toString()
         }
         Pattern.PARTIAL -> {
-            val parsedDate = YearMonth.parse(dateString, formatter)
-            val currentDate = YearMonth.now()
-            parsedDate == currentDate
+            YearMonth.now().toString()
         }
+    }
+}
+
+fun isMonthValid(dateString: String): Boolean {
+    val formatter = DateTimeFormatter.ofPattern(Pattern.PARTIAL.patternString)
+    return try {
+        YearMonth.parse(dateString, formatter)
+        true
+    } catch (_: DateTimeParseException){
+        false
     }
 }
 
