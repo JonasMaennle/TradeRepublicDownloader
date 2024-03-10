@@ -34,6 +34,10 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
                 // filter for events with selected document type
                 val filteredTimelineEventIds = eventFilter.applyTimelineEventFilter(response.data)
                 documentsExpected = filteredTimelineEventIds.size
+                if (documentsExpected == 0) {
+                    logger.info { "No matching documents found in you timeline" }
+                    terminateApplication()
+                }
                 filteredTimelineEventIds.forEach { this.createNewSubRequest(TimelineDetailRequest(sessionToken, it)) }
             }
             is TimelineDetailResponse -> {
