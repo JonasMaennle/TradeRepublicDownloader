@@ -3,6 +3,7 @@ package com.tr.service
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.tr.Login
 import com.tr.model.DownloadProgress
 import com.tr.model.request.TRRequest
 import com.tr.model.request.TimelineDetailRequest
@@ -15,7 +16,7 @@ import com.tr.websocket.WebSocketService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.system.exitProcess
 
-class TradeRepublicDownloadService(private val sessionToken: String, private val eventFilter: EventFilter) : WebSocketCallback<ExpectedResponse> {
+class TradeRepublicDownloadService(private val sessionToken: String, private val eventFilter: EventFilter, private val login: Login) : WebSocketCallback<ExpectedResponse> {
     private val objectMapper: ObjectMapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).configure(
         DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
     private val fileService = FileService()
@@ -73,9 +74,11 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
     private fun terminateApplication() {
         webSocketService.disconnect()
         println()
-        logger.info { "Job finished successful. See you next time :)" }
+        logger.info { "Job finished successful :)" }
 
-        getUserInput("Enter 'q' to close the application:", logger) { it == "q" }
-        exitProcess(0)
+        val userInput = getUserInput("Enter 'q' to close the application or 'c' to start another request:", logger) { it == "q" || it == "c" }
+        if (userInput == "q") exitProcess(0)
+
+        login.processUserInput(sessionToken) // maybe refresh session token
     }
 }

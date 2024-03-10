@@ -46,6 +46,14 @@ class Login {
         val twoFaCode = getUserInput(
             "Please enter the four digit 2FA code you received on your phone (valid for ${loginResponse.countdownInSeconds} seconds):", logger
         ) { it.length == 4 }
+        val twoFaResponse = clientService.postRequest<String>("https://api.traderepublic.com/api/v1/auth/web/login/${loginResponse.processId}/$twoFaCode")
+        val customHeaders = twoFaResponse.headers.toCustomHeaders()
+        val map = transformCookiesToMap(customHeaders.setCookies)
+        val sessionToken = map["tr_session"] ?: throw Exception("Invalid Code. No session cookie received")
+        processUserInput(sessionToken)
+    }
+
+    fun processUserInput(sessionToken: String) {
         val documentInput = getUserInput(
             "Please enter the document type you're looking for, 'D' for Dividende or 'S' for Sparplan or 'Z' for Zinsen:", logger
         ) { it == "D" || it == "S" || it == "Z" }
@@ -56,13 +64,7 @@ class Login {
             selectedMonth = getCurrentMonth(Pattern.PARTIAL)
         }
         val selectedMonthDate = YearMonth.parse(selectedMonth, DateTimeFormatter.ofPattern(Pattern.PARTIAL.patternString))
-
-        val twoFaResponse = clientService.postRequest<String>("https://api.traderepublic.com/api/v1/auth/web/login/${loginResponse.processId}/$twoFaCode")
-        val customHeaders = twoFaResponse.headers.toCustomHeaders()
-        val map = transformCookiesToMap(customHeaders.setCookies)
-        val sessionToken = map["tr_session"] ?: throw Exception("Invalid Code. No session cookie received")
-
-        TradeRepublicDownloadService(sessionToken, getEventFilter(documentInput, selectedMonthDate))
+        TradeRepublicDownloadService(sessionToken, getEventFilter(documentInput, selectedMonthDate), this)
             .createNewSubRequest(TimelineRequest(sessionToken))
     }
 

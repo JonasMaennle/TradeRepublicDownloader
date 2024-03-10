@@ -1,5 +1,6 @@
 package com.tr.utils
 
+import com.tr.model.Pattern
 import com.tr.model.response.Document
 import com.tr.model.response.TimelineDetailResponse
 import com.tr.model.response.TimelineEvent
