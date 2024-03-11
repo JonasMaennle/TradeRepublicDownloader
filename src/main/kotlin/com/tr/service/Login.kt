@@ -20,7 +20,7 @@ class Login {
     }
 
     private fun initialLogin() {
-        logger.info { "Starting Trade Republic 'Sparplan' downloader..." }
+        logger.info { "Welcome to 'Trade Republic PDF Downloader'" }
         val dotenv = Dotenv.configure().directory(".").load()
         val phoneNumber = dotenv["PHONE"] ?: getUserInput("Please enter your phone number (e.g. +49123456789):", logger) { it.length > 4 }
         val pin = dotenv["PIN"] ?: getUserInput("Please enter your four digit pin (e.g. 1234):", logger) { it.length == 4 }
@@ -49,6 +49,7 @@ class Login {
     }
 
     fun processUserInput(sessionToken: String) {
+        logger.info { "Login Successful." }
         val documentInput = getUserInput(
             "Please enter the document type you're looking for, 'D' for Dividende or 'S' for Sparplan or 'Z' for Zinsen:", logger
         ) { it == "D" || it == "S" || it == "Z" }
