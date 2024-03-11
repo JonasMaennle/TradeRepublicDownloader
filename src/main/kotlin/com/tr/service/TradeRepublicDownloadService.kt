@@ -75,8 +75,8 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
         println()
         logger.info { "Job finished successful :)" }
 
-        val userInput = getUserInput("Enter 'q' to close the application or 'c' to start another query:", logger) { it == "q" || it == "c" }
-        if (userInput == "q") exitProcess(0)
+        val userInput = getUserInput("Enter 'X' to close the application or 'Q' to start another query:", logger) { it == "X" || it == "Q" }
+        if (userInput == "X") exitProcess(0)
 
         login.processUserInput(sessionToken) // maybe refresh session token
     }

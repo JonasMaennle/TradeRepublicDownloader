@@ -19,14 +19,14 @@ class EventFilter(private val filter: Filter, private val selectedMonth: YearMon
     fun fileNameBuilder(document: Document, timelineDetailResponse: TimelineDetailResponse): String {
         return when (filter) {
             is SavingPlanFilter -> {
-                "${document.title}_${reverseDate(document.detail)}_${timelineDetailResponse.titleText}"
+                "${document.title}_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
             }
             is DividendFilter -> {
                 val prefixTitle = timelineDetailResponse.sections.find { it.type == "text" }?.title
-                return "${prefixTitle}_${reverseDate(document.detail)}_${timelineDetailResponse.titleText}"
+                return "${prefixTitle}_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
             }
             is InterestFilter -> {
-                "Zinsen_${reverseDate(document.detail)}"
+                "Zinsen_${transformDate(document.detail)}"
             }
         }
     }
