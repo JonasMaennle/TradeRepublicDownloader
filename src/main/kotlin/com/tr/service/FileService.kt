@@ -2,6 +2,8 @@ package com.tr.service
 
 import com.tr.model.DownloadProgress
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.awt.Desktop
+import java.io.File
 import java.net.URL
 import java.nio.file.*
 
@@ -12,6 +14,7 @@ class FileService {
 
     init {
         createFolderIfNotExist()
+        openFolder()
     }
 
     fun downloadFile(url: String, fileName: String, downloadProgress: DownloadProgress) {
@@ -49,5 +52,20 @@ class FileService {
             FileSystems.newFileSystem(uri, emptyMap<String, Any>()).getPath("/")
         }
         return jarPath.parent
+    }
+
+    private fun openFolder() {
+        val folderPath = this.folderPath.toString()
+        try {
+            val file = File(folderPath)
+            if (file.exists() && file.isDirectory) {
+                Desktop.getDesktop().open(file)
+                logger.info { "Folder opened: $folderPath" }
+            } else {
+                logger.error { "Folder does not exist or is not a directory: $folderPath" }
+            }
+        } catch (e: Exception) {
+            logger.error { "Error opening folder: ${e.message}" }
+        }
     }
 }
