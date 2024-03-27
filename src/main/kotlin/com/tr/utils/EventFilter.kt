@@ -18,30 +18,17 @@ data object InterestFilter : Filter()
 class EventFilter(private val filter: Filter, private val selectedMonth: YearMonth) {
     fun fileNameBuilder(document: Document, timelineDetailResponse: TimelineDetailResponse): String {
         return when (filter) {
-            is SavingPlanFilter -> {
-                "${document.title}_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
-            }
-            is DividendFilter -> {
-                val prefixTitle = timelineDetailResponse.sections.find { it.type == "text" }?.title
-                return "${prefixTitle}_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
-            }
-            is InterestFilter -> {
-                "Zinsen_${transformDate(document.detail)}"
-            }
+            is SavingPlanFilter -> "${document.title}_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
+            is DividendFilter -> "Dividende_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
+            is InterestFilter -> "Zinsen_${transformDate(document.detail)}"
         }
     }
 
     fun applyTimelineEventFilter(data: List<TimelineEvent>): List<String> {
         return when (filter) {
-            is SavingPlanFilter -> {
-                applyFilter(data, "Sparplan")
-            }
-            is DividendFilter -> {
-                applyFilter(data, "Dividende")
-            }
-            is InterestFilter -> {
-                applyFilter(data, "Zinsen")
-            }
+            is SavingPlanFilter -> applyFilter(data, "Sparplan")
+            is DividendFilter -> applyFilter(data, "Gutschrift")
+            is InterestFilter -> applyFilter(data, "Zinsen")
         }
     }
 
