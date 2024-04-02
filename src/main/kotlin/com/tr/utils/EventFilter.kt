@@ -14,6 +14,7 @@ sealed class Filter
 data object SavingPlanFilter : Filter()
 data object DividendFilter : Filter()
 data object InterestFilter : Filter()
+data object OrderFilter : Filter()
 
 class EventFilter(private val filter: Filter, private val selectedMonth: YearMonth) {
     fun fileNameBuilder(document: Document, timelineDetailResponse: TimelineDetailResponse): String {
@@ -21,6 +22,7 @@ class EventFilter(private val filter: Filter, private val selectedMonth: YearMon
             is SavingPlanFilter -> "${document.title}_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
             is DividendFilter -> "Dividende_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
             is InterestFilter -> "Zinsen_${transformDate(document.detail)}"
+            is OrderFilter -> "${timelineDetailResponse.titleText}_${transformDate(document.detail)}"
         }
     }
 
@@ -29,6 +31,7 @@ class EventFilter(private val filter: Filter, private val selectedMonth: YearMon
             is SavingPlanFilter -> applyFilter(data, "Sparplan")
             is DividendFilter -> applyFilter(data, "Gutschrift")
             is InterestFilter -> applyFilter(data, "Zinsen")
+            is OrderFilter -> applyFilter(data, "Kauf")
         }
     }
 

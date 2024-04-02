@@ -51,8 +51,8 @@ class Login {
     fun processUserInput(sessionToken: String) {
         logger.info { "Login Successful." }
         val documentInput = getUserInput(
-            "Please enter the document type you're looking for, 'D' for Dividende or 'S' for Sparplan or 'Z' for Zinsen:", logger
-        ) { it == "D" || it == "S" || it == "Z" }
+            "Please enter the document type you're looking for, 'D' for Dividende or 'S' for Sparplan or 'Z' for Zinsen or 'O' for Order:", logger
+        ) { it == "D" || it == "S" || it == "Z" || it == "O" }
         var selectedMonth = getUserInput(
             "Please enter year and month you are interested in (e.g. 2024-03). Or leave it empty for using the current month:", logger
         ) { isMonthValid(it) || it.isEmpty() }
@@ -69,6 +69,7 @@ class Login {
             "D" -> { EventFilter(DividendFilter, selectedMonth) }
             "S" -> { EventFilter(SavingPlanFilter, selectedMonth) }
             "Z" -> { EventFilter(InterestFilter, selectedMonth) }
+            "O" -> { EventFilter(OrderFilter, selectedMonth) }
             else -> { throw IllegalStateException("Invalid document type") }
         }
     }

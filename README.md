@@ -1,5 +1,5 @@
 # Trade Republic PDF Downloader
-This project was created out of the need for a bulk download option of **Sparplan**, **Dividenden** and **Zinsen** PDFs from Trade Republic.</br>
+This project was created out of the need for a bulk download option of **Sparplan**, **Dividenden**, **Zinsen** and **Order** PDFs from Trade Republic.</br>
 And also to practice some Kotlin...
 
 ## Disclaimer

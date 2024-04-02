@@ -53,18 +53,23 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
 
             is TimelineDetailResponse -> {
                 logger.debug { "Received timeline detail event" }
-                val document: Document = response.sections
+                val document: Document? = response.sections
                     .filter { it.documents != null }
                     .flatMap { it.documents!! }
-                    .find { eventFilter.isInSelectedMonth(it.detail) } ?: throw IllegalStateException("No document received")
+                    .find { eventFilter.isInSelectedMonth(it.detail) }
 
+                // pdf can be unavailable in the first few hours
                 documentsReceived++
-                fileService.downloadFile(
-                    document.action.payload as String,
-                    eventFilter.fileNameBuilder(document, response),
-                    DownloadProgress(documentsReceived, documentsExpected)
-                )
-
+                if (document == null) {
+                    println()
+                    this.logger.info { "No downloadable PDF found for ${response.titleText} ${response.subtitleText}" }
+                } else {
+                    fileService.downloadFile(
+                        document.action.payload as String,
+                        eventFilter.fileNameBuilder(document, response),
+                        DownloadProgress(documentsReceived, documentsExpected)
+                    )
+                }
                 if (documentsReceived == documentsExpected) terminateApplication()
             }
         }
