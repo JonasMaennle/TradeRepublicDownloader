@@ -2,38 +2,31 @@ package com.tr.model.response
 
 interface ExpectedResponse
 
-data class TimelineResponse(
-    val data: List<TimelineEvent>,
+data class TimelineTransactionsResponse(
+    val items: List<TimelineTransactionsDetail>,
     val cursors: Cursors
 ) : ExpectedResponse
 
-data class TimelineDetailResponse(
+data class TimelineTransactionsDetail(
     val id: String,
-    val titleText: String,
-    val subtitleText: String,
-    val sections: List<TimelineDetail>
+    val timestamp: String,
+    val title: String?,
+    val subtitle: String?,
+    val eventType: String
+)
+
+data class TimelineDetailV2Response(
+    val id: String,
+    val sections: List<Section>
 ) : ExpectedResponse
 
-data class TimelineEvent(
-    val type: String,
-    val data: TimelineEventData
-)
-
-data class TimelineEventData(
-    val id: String,
+data class Section(
     val title: String,
-    val body: String?,
-    val action: Action?, // not available for "Einzahlung"
-    val month: String?
+    val data: Any?, // can be DocumentSection || OverviewSection
+    val type: String
 )
 
-data class TimelineDetail(
-    val type: String,
-    val title: String,
-    val documents: List<Document>?
-)
-
-data class Document(
+data class DocumentSection(
     val title: String,
     val detail: String,
     val action: Action,
@@ -43,6 +36,15 @@ data class Document(
 data class Action(
     val type: String,
     val payload: Any?
+)
+
+data class OverviewSection(
+    val title: String,
+    val detail: OverviewSectionDetail
+)
+
+data class OverviewSectionDetail(
+    val text: String
 )
 
 data class Cursors(

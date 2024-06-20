@@ -1,12 +1,10 @@
 package com.tr.utils
 
 import com.tr.model.Pattern
-import com.tr.model.response.Document
-import com.tr.model.response.TimelineDetailResponse
-import com.tr.model.response.TimelineEvent
-import com.tr.model.response.TimelineResponse
+import com.tr.model.response.*
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
@@ -17,28 +15,40 @@ data object InterestFilter : Filter()
 data object OrderFilter : Filter()
 
 class EventFilter(private val filter: Filter, private val selectedMonth: YearMonth) {
-    fun fileNameBuilder(document: Document, timelineDetailResponse: TimelineDetailResponse): String {
+    fun fileNameBuilder(date: String, name: String?): String {
         return when (filter) {
-            is SavingPlanFilter -> "${document.title}_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
-            is DividendFilter -> "Dividende_${transformDate(document.detail)}_${timelineDetailResponse.titleText}"
-            is InterestFilter -> "Zinsen_${transformDate(document.detail)}"
-            is OrderFilter -> "${timelineDetailResponse.titleText}_${transformDate(document.detail)}"
+            is SavingPlanFilter -> "Abrechnung Sparplan_${transformDate(date)}_${name}"
+            is DividendFilter -> "Dividende_${transformDate(date)}_${name}"
+            is InterestFilter -> "Zinsen_${transformDate(date)}"
+            is OrderFilter -> "Kauf_${transformDate(date)}_${name}"
         }
     }
 
-    fun applyTimelineEventFilter(data: List<TimelineEvent>): List<String> {
+    fun applyTimelineEventFilter(items: List<TimelineTransactionsDetail>): List<String> {
         return when (filter) {
-            is SavingPlanFilter -> applyFilter(data, "Sparplan")
-            is DividendFilter -> applyFilter(data, "Gutschrift")
-            is InterestFilter -> applyFilter(data, "Zinsen")
-            is OrderFilter -> applyFilter(data, "Kauf")
+            is SavingPlanFilter -> applyFilter(items, listOf("SAVINGS_PLAN_EXECUTED"))
+            is DividendFilter -> applyFilter(items, listOf("ssp_corporate_action_invoice_cash", "CREDIT"))
+            is InterestFilter -> applyFilter(items, listOf("INTEREST_PAYOUT_CREATED"))
+            is OrderFilter -> applyFilter(items, listOf("ORDER_EXECUTED"))
         }
     }
 
-    private fun applyFilter(data: List<TimelineEvent>, identifier: String): List<String> {
-        return data
-            .filter { it.data.body?.contains(identifier) ?: false && isInSelectedMonth(it.data.month, Pattern.PARTIAL) }
-            .map { it.data.id }
+    private fun applyFilter(items: List<TimelineTransactionsDetail>, identifier: List<String>): List<String> {
+        return items
+            .filter { identifier.contains(it.eventType) && isMonthEqual(it.timestamp, selectedMonth) }
+            .map { it.id }
+    }
+
+    private fun isMonthEqual(dateString: String?, selectedMonth: YearMonth): Boolean {
+        if (dateString.isNullOrEmpty()) return false
+        return try {
+            val timestampFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+            val receivedDate = ZonedDateTime.parse(dateString, timestampFormatter)
+            val receivedYearMonth = YearMonth.of(receivedDate.year, receivedDate.monthValue)
+            return selectedMonth == receivedYearMonth
+        } catch (e: DateTimeParseException) {
+            false
+        }
     }
 
     fun isInSelectedMonth(dateString: String?, pattern: Pattern = Pattern.FULL): Boolean {
@@ -46,12 +56,14 @@ class EventFilter(private val filter: Filter, private val selectedMonth: YearMon
         return try {
             when (pattern) {
                 Pattern.FULL -> {
-                    val parsedDateA = LocalDate.parse(dateString, DateTimeFormatter.ofPattern(Pattern.FULL.patternString))
+                    val parsedDateA =
+                        LocalDate.parse(dateString, DateTimeFormatter.ofPattern(Pattern.FULL.patternString))
                     parsedDateA.year == selectedMonth.year && parsedDateA.month == selectedMonth.month
                 }
 
                 Pattern.PARTIAL -> {
-                    val parsedDateA = YearMonth.parse(dateString, DateTimeFormatter.ofPattern(Pattern.PARTIAL.patternString))
+                    val parsedDateA =
+                        YearMonth.parse(dateString, DateTimeFormatter.ofPattern(Pattern.PARTIAL.patternString))
                     parsedDateA == selectedMonth
                 }
             }
@@ -60,15 +72,17 @@ class EventFilter(private val filter: Filter, private val selectedMonth: YearMon
         }
     }
 
-    fun isTimelineInDateRange(timelineResponse: TimelineResponse): Boolean {
-        val formatter = DateTimeFormatter.ofPattern(Pattern.PARTIAL.patternString)
+    fun isTimelineInDateRange(timelineTransactionsResponse: TimelineTransactionsResponse): Boolean {
+        val timestampFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
         try {
-            val lastEntry = timelineResponse.data.last()
-            val entryMonth = YearMonth.parse(lastEntry.data.month, formatter)
-            return if (selectedMonth.isBefore(entryMonth)) {
+            val lastTimestamp = timelineTransactionsResponse.items.last().timestamp
+            val receivedDate = ZonedDateTime.parse(lastTimestamp, timestampFormatter)
+            val receivedYearMonth = YearMonth.of(receivedDate.year, receivedDate.monthValue)
+            return if (selectedMonth.isBefore(receivedYearMonth)) {
                 true
-            } else !selectedMonth.isAfter(entryMonth)
-        } catch (_: Exception) {}
+            } else !selectedMonth.isAfter(receivedYearMonth)
+        } catch (_: Exception) {
+        }
         return false
     }
 }

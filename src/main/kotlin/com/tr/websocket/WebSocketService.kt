@@ -2,8 +2,8 @@ package com.tr.websocket
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.tr.model.request.ConnectRequest
-import com.tr.model.response.TimelineDetailResponse
-import com.tr.model.response.TimelineResponse
+import com.tr.model.response.TimelineDetailV2Response
+import com.tr.model.response.TimelineTransactionsResponse
 import com.tr.service.TradeRepublicDownloadService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import okhttp3.OkHttpClient
@@ -16,7 +16,7 @@ class WebSocketService(
     private val objectMapper: ObjectMapper
 ) : WebSocketListener() {
     companion object {
-        private val TARGET_CLASSES = listOf(TimelineResponse::class.java, TimelineDetailResponse::class.java)
+        private val TARGET_CLASSES = listOf(TimelineTransactionsResponse::class.java, TimelineDetailV2Response::class.java)
         private var LOCALE = "de"
         private var API_ENDPOINT = "wss://api.traderepublic.com"
     }

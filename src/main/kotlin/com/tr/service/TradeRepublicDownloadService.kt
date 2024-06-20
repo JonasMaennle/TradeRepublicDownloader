@@ -3,13 +3,13 @@ package com.tr.service
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.tr.model.DownloadProgress
 import com.tr.model.request.TRRequest
 import com.tr.model.request.TimelineDetailRequest
-import com.tr.model.request.TimelineRequest
+import com.tr.model.request.TimelineTransactionsRequest
 import com.tr.model.response.*
-import com.tr.utils.EventFilter
-import com.tr.utils.getUserInput
+import com.tr.utils.*
 import com.tr.websocket.WebSocketCallback
 import com.tr.websocket.WebSocketService
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -32,14 +32,14 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
 
     override fun <T>onResponseReceived(response: T) {
         when (response) {
-            is TimelineResponse -> {
-                logger.debug { "Received timeline event" }
-                filteredTimelineEventIds.addAll(eventFilter.applyTimelineEventFilter(response.data))
+            is TimelineTransactionsResponse -> {
+                logger.debug { "Received timelineTransactions event" }
+                filteredTimelineEventIds.addAll(eventFilter.applyTimelineEventFilter(response.items))
 
                 // fetch older timeline entries -> one request contains 30 entries
                 if (!response.cursors.after.isNullOrEmpty() && eventFilter.isTimelineInDateRange(response)) {
                     timelineReceivedCounter++
-                    createNewSubRequest(TimelineRequest(sessionToken, response.cursors.after))
+                    createNewSubRequest(TimelineTransactionsRequest(sessionToken, response.cursors.after))
                     return
                 }
 
@@ -51,22 +51,31 @@ class TradeRepublicDownloadService(private val sessionToken: String, private val
                 filteredTimelineEventIds.forEach { this.createNewSubRequest(TimelineDetailRequest(sessionToken, it)) }
             }
 
-            is TimelineDetailResponse -> {
+            is TimelineDetailV2Response -> {
                 logger.debug { "Received timeline detail event" }
-                val document: Document? = response.sections
-                    .filter { it.documents != null }
-                    .flatMap { it.documents!! }
-                    .find { eventFilter.isInSelectedMonth(it.detail) }
+                // find matching section
+                val documentSection: Section? = response.sections.find { it.type == "documents" }
+                val overviewSection: Section? = response.sections.find { it.title == "Übersicht" }
+                if (documentSection == null || overviewSection == null) return
 
-                // pdf can be unavailable in the first few hours
+                // find pdf download url
+                val documentString = objectMapper.writeValueAsString(documentSection.data)
+                val documents: List<DocumentSection> = objectMapper.readValue(documentString)
+                val documentData: DocumentSection? = documents.find { eventFilter.isInSelectedMonth(it.detail) }
+
+                // find company name
+                val overviewString = objectMapper.writeValueAsString(overviewSection.data)
+                val overviewList: List<OverviewSection> = objectMapper.readValue(overviewString)
+                val name = overviewList.find { it.title == "Asset" || it.title == "Wertpapier" }?.detail?.text ?: "missing"
+
                 documentsReceived++
-                if (document == null) {
+                if (documentData == null) {
                     println()
-                    this.logger.info { "No downloadable PDF found for ${response.titleText} ${response.subtitleText}" }
+                    this.logger.info { "No downloadable PDF found for ${response.id}" }
                 } else {
                     fileService.downloadFile(
-                        document.action.payload as String,
-                        eventFilter.fileNameBuilder(document, response),
+                        documentData.action.payload as String,
+                        eventFilter.fileNameBuilder(documentData.detail, name),
                         DownloadProgress(documentsReceived, documentsExpected)
                     )
                 }

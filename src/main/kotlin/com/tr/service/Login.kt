@@ -3,7 +3,7 @@ package com.tr.service
 import com.tr.model.Pattern
 import com.tr.model.response.LoginResponse
 import com.tr.model.request.LoginRequest
-import com.tr.model.request.TimelineRequest
+import com.tr.model.request.TimelineTransactionsRequest
 import com.tr.utils.*
 import io.github.cdimascio.dotenv.Dotenv
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -61,7 +61,7 @@ class Login {
         }
         val selectedMonthDate = YearMonth.parse(selectedMonth, DateTimeFormatter.ofPattern(Pattern.PARTIAL.patternString))
         TradeRepublicDownloadService(sessionToken, getEventFilter(documentInput, selectedMonthDate), this)
-            .createNewSubRequest(TimelineRequest(sessionToken))
+            .createNewSubRequest(TimelineTransactionsRequest(sessionToken))
     }
 
     private fun getEventFilter(documentInput: String, selectedMonth: YearMonth): EventFilter {

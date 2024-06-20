@@ -6,16 +6,16 @@ data class ConnectRequest(
     val locale: String
 ) : TRRequest
 
-data class TimelineRequest(
+data class TimelineTransactionsRequest(
     val token: String,
     val after: String? = null,
-    val type: String = "timeline"
+    val type: String = "timelineTransactions"
 ) : TRRequest
 
 data class TimelineDetailRequest(
     val token: String,
     val id: String,
-    val type: String = "timelineDetail"
+    val type: String = "timelineDetailV2"
 ) : TRRequest
 
 data class LoginRequest(
