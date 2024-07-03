@@ -26,7 +26,7 @@ class EventFilter(private val filter: Filter, private val selectedMonth: YearMon
 
     fun applyTimelineEventFilter(items: List<TimelineTransactionsDetail>): List<String> {
         return when (filter) {
-            is SavingPlanFilter -> applyFilter(items, listOf("SAVINGS_PLAN_EXECUTED"))
+            is SavingPlanFilter -> applyFilter(items, listOf("SAVINGS_PLAN_EXECUTED", "SAVINGS_PLAN_INVOICE_CREATED"))
             is DividendFilter -> applyFilter(items, listOf("ssp_corporate_action_invoice_cash", "CREDIT"))
             is InterestFilter -> applyFilter(items, listOf("INTEREST_PAYOUT_CREATED"))
             is OrderFilter -> applyFilter(items, listOf("ORDER_EXECUTED", "TRADE_INVOICE"))
