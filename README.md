@@ -6,21 +6,31 @@ And also to practice some Kotlin...
 This is a private project. It is **not** supported or associated by https://traderepublic.com
 
 ## Prerequisites
-- You need ```JDK 21``` or higher installed
+- You need ```JDK 21``` or higher
 
 ## Limitations
 This tool just works for **DE** locale.</br>
 
-## Run the Application
-Build project with Maven:
+## Build & Run the Application
+Build project with gradle:
 
 ```shell
-mvn clean install
+.\gradlew build
+```
+Run Spring Boot app
+```shell
+.\gradlew bootRun
 ```
 
-Start the application with the generated .exe in ```./target```
-
-Or start the commandline tool as jar:
+## Executable JAR & .exe
+After running the **build** command you will find a jar with all dependencies in
+the build folder
 ```shell
-java -jar .\target\TradeRepublicDownloader-1.0-jar-with-dependencies.jar
+java -jar ./build/libs/'Trade Republic Downloader-1.0.0.jar'
+```
+You can also create a .exe (which also demands an installed JRE)
+
+The 'Trade Republic Downloader.exe' will be generated in the build folder aswell.
+```shell
+.\gradlew createExe
 ```

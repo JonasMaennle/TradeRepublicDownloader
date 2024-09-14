@@ -53,10 +53,15 @@ launch4j {
 	outputDir = "$projectDir/build"
 }
 
+tasks.named<JavaExec>("bootRun") {
+	standardInput = System.`in`
+}
+
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
 
-tasks.named<JavaExec>("bootRun") {
-	standardInput = System.`in`
+tasks.named("createExe") {
+	doNotTrackState("Awaiting folder")
+	dependsOn("build")
 }

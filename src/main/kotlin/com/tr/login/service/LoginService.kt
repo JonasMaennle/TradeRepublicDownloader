@@ -17,10 +17,10 @@ class LoginService(
     @Autowired private val httpService: HttpService,
     @Autowired private val userInputService: UserInputService,
 ) {
-    @Value("\${PHONE_NUMBER}")
+    @Value("\${PHONE_NUMBER:}")
     private lateinit var phoneNumber: String
 
-    @Value("\${PIN}")
+    @Value("\${PIN:}")
     private lateinit var pin: String
 
     fun initializeLogin() {
