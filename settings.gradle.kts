@@ -1,1 +1,1 @@
-rootProject.name = "TradeRepublicDownloader"
+rootProject.name = "Trade Republic Downloader"

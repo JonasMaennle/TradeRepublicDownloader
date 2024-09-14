@@ -4,12 +4,11 @@ plugins {
 	id("org.springframework.boot") version "3.3.3"
 	id("io.spring.dependency-management") version "1.1.6"
 	id("edu.sc.seis.launch4j") version "3.0.6"
-	id("com.github.johnrengelman.shadow") version "8.1.1"
 	application
 }
 
 group = "com.tr"
-version = "0.0.1-SNAPSHOT"
+version = "1.0.0"
 
 java {
 	toolchain {
@@ -46,11 +45,18 @@ application {
 }
 
 launch4j {
-	mainClassName = "com.tr.TradeRepublicDownloaderApplicationKt"
 	icon = "${projectDir}/src/main/resources/images/launcher-icon.ico"
 	headerType = "console"
+	version = "${project.version}"
+	textVersion = "${project.version}"
+	jarFiles = project.tasks.named("bootJar").map { it.outputs.files }
+	outputDir = "$projectDir/build"
 }
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.named<JavaExec>("bootRun") {
+	standardInput = System.`in`
 }

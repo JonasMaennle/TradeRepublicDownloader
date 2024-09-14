@@ -6,11 +6,10 @@ And also to practice some Kotlin...
 This is a private project. It is **not** supported or associated by https://traderepublic.com
 
 ## Prerequisites
-- You need ```JRE 11``` or higher installed to run the application
-- Build requires ```maven 3.x.x```
+- You need ```JDK 21``` or higher installed
 
 ## Limitations
-This tool just works for **de** locale.</br>
+This tool just works for **DE** locale.</br>
 
 ## Run the Application
 Build project with Maven:
