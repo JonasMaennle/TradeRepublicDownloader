@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: "TradeRepublicDownloader"
+
+logging:
+  level:
+    root: INFO
+
+tr:
+  api:
+    endpoint: "wss://api.traderepublic.com"

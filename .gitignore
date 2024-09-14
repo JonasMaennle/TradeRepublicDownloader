@@ -1,4 +1,7 @@
 .idea
+.vscode
 *.iml
 target
+build
+.gradle
 .env
