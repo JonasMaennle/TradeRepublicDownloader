@@ -12,8 +12,14 @@ This is a private project. It is **not** supported or associated by https://trad
 This tool just works for **DE** locale.</br>
 
 ## Build & Run the Application
-Build project with gradle:
+For login convenience you can set a .env file to the resources folder.
+Just copy the **.env.example** remove the **.example** suffix and set your credentials like in the example below.
+```
+PHONE_NUMBER="+49123456789"
+PIN="1234"
+```
 
+Build project with gradle:
 ```shell
 .\gradlew build
 ```
@@ -28,7 +34,7 @@ the build folder
 ```shell
 java -jar ./build/libs/'Trade Republic Downloader-1.0.0.jar'
 ```
-You can also create a .exe (which also demands an installed JRE)
+You can also create a .exe (which still demands an installed JRE)
 
 The 'Trade Republic Downloader.exe' will be generated in the build folder aswell.
 ```shell
