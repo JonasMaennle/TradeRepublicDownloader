@@ -29,7 +29,7 @@ class FileService {
 
             Files.copy(fileUrl.openStream(), filePath, StandardCopyOption.REPLACE_EXISTING)
             println()
-            logger.info("File '$fileName' downloaded to '$filePath'")
+            logger.info("File '$fileName' downloaded.")
             logger.info("Downloaded (${downloadProgress.current}/${downloadProgress.total}) file(s) successfully.")
         } catch (e: Exception) {
             logger.error("Error downloading file: ${e.message}")

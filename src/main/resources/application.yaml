@@ -1,10 +1,8 @@
 spring:
   application:
     name: "TradeRepublicDownloader"
-
-logging:
-  level:
-    root: INFO
+  main:
+    log-startup-info: false
 
 tr:
   api:
