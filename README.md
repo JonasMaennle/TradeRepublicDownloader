@@ -23,7 +23,7 @@ Build project with gradle:
 ```shell
 .\gradlew build
 ```
-Run Spring Boot app for development
+Run Spring Boot app for development:
 ```shell
 .\gradlew bootRun
 ```
