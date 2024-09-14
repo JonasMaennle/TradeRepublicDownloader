@@ -21,9 +21,6 @@ class FileService {
         folderPath = getJarDirectory().resolve(FOLDER_NAME)
         createFolderIfNotExist()
     }
-    init {
-        // createFolderIfNotExist()
-    }
 
     fun downloadFile(url: String, fileName: String, downloadProgress: DownloadProgress) {
         try {
@@ -64,19 +61,7 @@ class FileService {
     }
 
     private fun getJarDirectory(): Path {
-        // Get the path of a class file, which is inside the JAR
-        val path = Paths.get("").toAbsolutePath()
-        logger.info("ABSOLUTE: $path")
-        //val resource = object {}.javaClass.classLoader.getResource("com/tr/io/service/FileService.class")
-        //val uri = resource?.toURI()
-
-        //if (uri == null) {
-          //  throw IllegalStateException("Resource URI is null")
-        //}
-
-        //val jarPath = Paths.get(uri)
-        //logger.info("JAR PATH: $jarPath")
-        return path
+        return Paths.get("").toAbsolutePath()
     }
 
     private fun createFolderIfNotExist() {

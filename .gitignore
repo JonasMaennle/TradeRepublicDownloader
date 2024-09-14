@@ -5,3 +5,5 @@ target
 build
 .gradle
 .env
+/gradle/
+Trade Republic Downloads/
