@@ -9,20 +9,20 @@ import org.springframework.web.client.RestClient
 class HttpService {
     private val client = RestClient.create()
 
-    fun <T> post(url: String, body: Any, responseType: Class<T>): ResponseEntity<T> =
-        client
+    fun <T> post(
+        url: String,
+        responseType: Class<T>,
+        body: Any? = null
+    ): ResponseEntity<T> {
+        val request = client
             .post()
             .uri(url)
             .contentType(MediaType.APPLICATION_JSON)
-            .body(body)
-            .retrieve()
-            .toEntity(responseType)
 
-    fun <T> post(url: String, responseType: Class<T>): ResponseEntity<T> =
-        client
-            .post()
-            .uri(url)
-            .contentType(MediaType.APPLICATION_JSON)
+        val requestWithBody = body?.let { request.body(it) } ?: request
+
+        return requestWithBody
             .retrieve()
             .toEntity(responseType)
+    }
 }

@@ -17,6 +17,9 @@ class LoginService(
     @Autowired private val httpService: HttpService,
     @Autowired private val userInputService: UserInputService,
 ) {
+    @Value("\${tr.api.login:}")
+    private lateinit var loginUrl: String
+
     @Value("\${PHONE_NUMBER:}")
     private lateinit var phoneNumber: String
 
@@ -38,9 +41,9 @@ class LoginService(
         }
 
         val loginResponse = httpService.post(
-            "https://api.traderepublic.com/api/v1/auth/web/login",
+            loginUrl,
+            LoginResponse::class.java,
             LoginRequest(phoneNumber, pin),
-            LoginResponse::class.java
         )
         if (!loginResponse.statusCode.is2xxSuccessful || loginResponse.body == null) throw Exception("Code: ${loginResponse.statusCode.value()} Message: ${loginResponse.body}")
         perform2FA(loginResponse.body!!)
@@ -51,7 +54,7 @@ class LoginService(
             "Please enter the four digit 2FA code you received (valid for ${loginResponse.countdownInSeconds} seconds):",
             logger
         ) { it.length == 4 }
-        val twoFAResponse = httpService.post("https://api.traderepublic.com/api/v1/auth/web/login/${loginResponse.processId}/$twoFACode", Any::class.java)
+        val twoFAResponse = httpService.post("$loginUrl/${loginResponse.processId}/$twoFACode", Any::class.java)
         val cookieMap = transformHeaderCookiesToMap(twoFAResponse.headers[COOKIE_IDENTIFIER])
         val sessionToken = cookieMap[SESSION_IDENTIFIER] ?: throw Exception("Invalid Code. No session cookie received")
 

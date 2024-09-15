@@ -21,7 +21,7 @@ class WebsocketService(
     @Autowired private val objectMapper: ObjectMapper,
     @Autowired private val websocketCallback: WebsocketCallback<WebsocketResponse>,
 ) : WebSocketListener() {
-    @Value("\${tr.api.endpoint:}")
+    @Value("\${tr.api.websocket:}")
     private lateinit var apiEndpoint: String
 
     private lateinit var webSocket: WebSocket
