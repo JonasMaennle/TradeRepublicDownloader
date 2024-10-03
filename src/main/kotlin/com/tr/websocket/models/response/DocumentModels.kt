@@ -2,7 +2,6 @@ package com.tr.websocket.models.response
 
 data class DocumentSection(
     val title: String,
-    val detail: String,
     val action: Action,
     val id: String
 )

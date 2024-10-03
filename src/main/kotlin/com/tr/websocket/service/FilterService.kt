@@ -3,15 +3,12 @@ package com.tr.websocket.service
 import com.tr.io.models.DownloadOptions
 import com.tr.io.models.UserInput
 import com.tr.utils.isMonthEqual
-import com.tr.utils.models.TimeFormatPattern
 import com.tr.websocket.models.response.TimelineTransactionsDetail
 import com.tr.websocket.models.response.TimelineTransactionsResponse
 import org.springframework.stereotype.Service
-import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 @Service
 class FilterService {
@@ -32,7 +29,7 @@ class FilterService {
 
             DownloadOptions.INTEREST -> applyTimelineFilter(
                 entries,
-                listOf("INTEREST_PAYOUT_CREATED"),
+                listOf("INTEREST_PAYOUT_CREATED", "INTEREST_PAYOUT"),
                 userInput.yearMonth
             )
 
@@ -64,16 +61,5 @@ class FilterService {
         } catch (_: Exception) {
         }
         return false
-    }
-
-    fun isInSelectedMonth(dateString: String?, userInput: UserInput): Boolean {
-        if (dateString.isNullOrEmpty()) return false
-        return try {
-            val parsedDateA =
-                LocalDate.parse(dateString, DateTimeFormatter.ofPattern(TimeFormatPattern.FULL.patternString))
-            parsedDateA.year == userInput.yearMonth.year && parsedDateA.month == userInput.yearMonth.month
-        } catch (e: DateTimeParseException) {
-            false
-        }
     }
 }

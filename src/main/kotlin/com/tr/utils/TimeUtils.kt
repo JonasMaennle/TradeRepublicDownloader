@@ -50,3 +50,12 @@ fun transformDate(dateString: String): String {
     val desiredFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     return date.format(desiredFormatter).toString()
 }
+
+fun extractDateFromUrl(url: String): String? {
+    val regex = """postbox/(\d{4})/(\d{1,2})/(\d{1,2})""".toRegex()
+    val matchResult = regex.find(url)
+    return matchResult?.let {
+        val (year, month, day) = it.destructured
+        "%02d.%02d.%04d".format(day.toInt(), month.toInt(), year.toInt())
+    }
+}

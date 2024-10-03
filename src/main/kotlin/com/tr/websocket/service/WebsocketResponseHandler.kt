@@ -6,6 +6,7 @@ import com.tr.io.models.DownloadProgress
 import com.tr.io.service.FileService
 import com.tr.io.models.UserInput
 import com.tr.io.service.UserInputService
+import com.tr.utils.extractDateFromUrl
 import com.tr.websocket.models.request.TimelineDetailRequest
 import com.tr.websocket.models.request.TimelineTransactionsRequest
 import com.tr.websocket.models.response.*
@@ -76,9 +77,7 @@ class WebsocketResponseHandler(
 
                 // find pdf download url
                 val documentString = objectMapper.writeValueAsString(documentSection.data)
-                val documents: List<DocumentSection> = objectMapper.readValue(documentString)
-                val documentData: DocumentSection? =
-                    documents.find { filterService.isInSelectedMonth(it.detail, userInput) }
+                val document: DocumentSection? = objectMapper.readValue<List<DocumentSection>>(documentString).firstOrNull()
 
                 // find company name
                 val overviewString = objectMapper.writeValueAsString(overviewSection.data)
@@ -87,13 +86,14 @@ class WebsocketResponseHandler(
                     overviewList.find { it.title == "Asset" || it.title == "Wertpapier" }?.detail?.text ?: "missing"
 
                 documentsReceived++
-                if (documentData == null) {
+                if (document == null) {
                     println()
                     logger.warn("No downloadable PDF found for ${response.id}")
                 } else {
+                    val date = extractDateFromUrl(document.action.payload as String) ?: "invalid date"
                     fileService.downloadFile(
-                        documentData.action.payload as String,
-                        fileService.buildFileName(userInput, documentData.detail, name),
+                        document.action.payload,
+                        fileService.buildFileName(userInput, date, name),
                         DownloadProgress(documentsReceived, documentsExpected)
                     )
                 }
