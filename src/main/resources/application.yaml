@@ -8,3 +8,32 @@ tr:
   api:
     websocket: "wss://api.traderepublic.com"
     login: "https://api.traderepublic.com/api/v1/auth/web/login"
+
+actions:
+  dividend:
+    id: "D"
+    filename: "Dividende_$DATE_$NAME"
+    identifier:
+      - "ssp_corporate_action_invoice_cash"
+      - "CREDIT"
+
+  savingsPlan:
+    id: "S"
+    filename: "Abrechnung Sparplan_$DATE_$NAME"
+    identifier:
+      - "SAVINGS_PLAN_EXECUTED"
+      - "SAVINGS_PLAN_INVOICE_CREATED"
+
+  interest:
+    id: "Z"
+    filename: "Zinsen_$DATE"
+    identifier:
+      - "INTEREST_PAYOUT_CREATED"
+      - "INTEREST_PAYOUT"
+
+  order:
+    id: "O"
+    filename: "Kauf_$DATE_$NAME"
+    identifier:
+      - "ORDER_EXECUTED"
+      - "TRADE_INVOICE"

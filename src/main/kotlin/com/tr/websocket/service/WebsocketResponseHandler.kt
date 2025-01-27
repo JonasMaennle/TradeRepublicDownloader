@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.tr.io.models.DownloadProgress
 import com.tr.io.service.FileService
-import com.tr.io.models.UserInput
+import com.tr.io.models.UserSession
 import com.tr.io.service.UserInputService
 import com.tr.utils.extractDateFromUrl
 import com.tr.websocket.models.request.TimelineDetailRequest
@@ -29,39 +29,39 @@ class WebsocketResponseHandler(
     private var documentsReceived = 0
 
     override fun <T> onResponseReceived(response: T, websocketService: WebsocketService) {
-        val userInput: UserInput = userInputService.userInput
+        val userSession: UserSession = userInputService.userSession
         when (response) {
             is TimelineTransactionsResponse -> {
                 logger.debug("Received TimelineTransactionsResponse event")
                 filteredTimelineEventIds.addAll(
-                    filterService.filterForTimelineIds(
+                    filterService.applyTimelineFilter(
                         response.items,
-                        userInput
+                        userSession
                     )
                 )
 
                 // fetch older timeline entries -> one request contains 30 entries
                 if (!response.cursors.after.isNullOrEmpty() && filterService.isTimelineInDateRange(
                         response,
-                        userInput
+                        userSession
                     )
                 ) {
                     timelineReceivedCounter++
-                    websocketService.createNewRequest(TimelineTransactionsRequest(userInput.sessionToken, after = response.cursors.after))
+                    websocketService.createNewRequest(TimelineTransactionsRequest(userSession.sessionToken, after = response.cursors.after))
                     return
                 }
 
                 documentsExpected = filteredTimelineEventIds.size
                 if (documentsExpected == 0) {
                     logger.warn("No matching documents found in your timeline")
-                    terminateApplication(userInput.sessionToken)
+                    checkForAnotherQuery(userSession.sessionToken)
                 }
 
                 // request detail pages
                 filteredTimelineEventIds.forEach {
                     websocketService.createNewRequest(
                         TimelineDetailRequest(
-                            userInput.sessionToken,
+                            userSession.sessionToken,
                             it
                         )
                     )
@@ -83,7 +83,7 @@ class WebsocketResponseHandler(
                 val overviewString = objectMapper.writeValueAsString(overviewSection.data)
                 val overviewList: List<OverviewSection> = objectMapper.readValue(overviewString)
                 val name =
-                    overviewList.find { it.title == "Asset" || it.title == "Wertpapier" }?.detail?.text ?: "missing"
+                    overviewList.find { it.title == "Asset" || it.title == "Wertpapier" }?.detail?.text ?: ""
 
                 documentsReceived++
                 if (document == null) {
@@ -93,24 +93,24 @@ class WebsocketResponseHandler(
                     val date = extractDateFromUrl(document.action.payload as String) ?: "invalid date"
                     fileService.downloadFile(
                         document.action.payload,
-                        fileService.buildFileName(userInput, date, name),
+                        fileService.buildFileName(userSession, date, name),
                         DownloadProgress(documentsReceived, documentsExpected)
                     )
                 }
                 if (documentsReceived == documentsExpected) {
                     fileService.openFolder()
-                    terminateApplication(userInput.sessionToken)
+                    checkForAnotherQuery(userSession.sessionToken)
                 }
             }
         }
     }
 
-    private fun terminateApplication(sessionToken: String) {
-        reset()
+    private fun checkForAnotherQuery(sessionToken: String) {
+        resetProperties()
         userInputService.checkForNextRequest(sessionToken)
     }
 
-    fun reset() {
+    private fun resetProperties() {
         filteredTimelineEventIds.clear()
         timelineReceivedCounter = 0
         documentsExpected = 0

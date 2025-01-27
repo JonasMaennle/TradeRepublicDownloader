@@ -1,7 +1,7 @@
 package com.tr.io.service
 
-import com.tr.io.models.DownloadOptions
-import com.tr.io.models.UserInput
+import com.tr.config.DownloadOptionConfig
+import com.tr.io.models.UserSession
 import com.tr.utils.getCurrentMonth
 import com.tr.utils.isMonthValid
 import com.tr.utils.models.TimeFormatPattern
@@ -17,15 +17,16 @@ import kotlin.system.exitProcess
 @Service
 class UserInputService(
     @Autowired private val websocketService: WebsocketService,
+    @Autowired private val downloadOptionConfig: DownloadOptionConfig,
 ) {
-    lateinit var userInput: UserInput
+    lateinit var userSession: UserSession
 
     fun handleUserInput(sessionToken: String) {
         logger.debug("Login Successful")
         val documentType = readUserConsoleInput(
             "Please enter the document type you're looking for, 'D' for Dividende or 'S' for Sparplan or 'Z' for Zinsen or 'O' for Order:",
             logger
-        ) { DownloadOptions.isValidOption(it) }
+        ) { validateUserInput(it) }
 
         var selectedTime = readUserConsoleInput(
             "Please enter year and month you are interested in format YYYY-MM or leave it empty for using the current month:",
@@ -34,8 +35,8 @@ class UserInputService(
 
         if (selectedTime.isEmpty()) selectedTime = getCurrentMonth(TimeFormatPattern.PARTIAL)
 
-        userInput = UserInput(
-            DownloadOptions.fromValue(documentType),
+        userSession = UserSession(
+            downloadOptionConfig.getDownloadOptionById(documentType),
             selectedTime.toYearMonth(),
             sessionToken
         )
@@ -58,6 +59,9 @@ class UserInputService(
 
         handleUserInput(sessionToken)
     }
+
+    private fun validateUserInput(input: String) =
+        downloadOptionConfig.getDownloadOptionMap().keys.contains(input.uppercase())
 
     companion object {
         private val logger = LoggerFactory.getLogger(UserInputService::class.java)

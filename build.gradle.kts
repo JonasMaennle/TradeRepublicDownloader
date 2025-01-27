@@ -27,7 +27,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("com.squareup.okhttp3:okhttp:4.12.0")
-	implementation("me.paulschwarz:spring-dotenv:4.0.0")
+	implementation("io.github.cdimascio:dotenv-kotlin:6.5.0")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")

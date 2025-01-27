@@ -1,8 +1,7 @@
 package com.tr.io.service
 
 import com.tr.io.models.DownloadProgress
-import com.tr.io.models.DownloadOptions
-import com.tr.io.models.UserInput
+import com.tr.io.models.UserSession
 import com.tr.utils.transformDate
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
@@ -36,13 +35,11 @@ class FileService {
         }
     }
 
-    fun buildFileName(userInput: UserInput, date: String, name: String): String {
-        return when (userInput.documentType) {
-            DownloadOptions.DIVIDEND -> "Dividende_${transformDate(date)}_${name}"
-            DownloadOptions.SAVINGS_PLAN -> "Abrechnung Sparplan_${transformDate(date)}_${name}"
-            DownloadOptions.INTEREST -> "Zinsen_${transformDate(date)}"
-            DownloadOptions.ORDER -> "Kauf_${transformDate(date)}_${name}"
-        }
+    fun buildFileName(userSession: UserSession, date: String, name: String): String {
+        val filenameTemplate = userSession.downloadOption.filename
+        return filenameTemplate
+            .replace("\$DATE", transformDate(date))
+            .replace("\$NAME", name)
     }
 
     fun openFolder() {
