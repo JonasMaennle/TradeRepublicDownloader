@@ -73,17 +73,25 @@ class WebsocketResponseHandler(
                 // find matching section
                 val documentSection: Section? = response.sections.find { it.type == "documents" }
                 val overviewSection: Section? = response.sections.find { it.title == "Übersicht" }
-                if (documentSection == null || overviewSection == null) return
-
-                // find pdf download url
-                val documentString = objectMapper.writeValueAsString(documentSection.data)
-                val document: DocumentSection? = objectMapper.readValue<List<DocumentSection>>(documentString).firstOrNull()
+                if (overviewSection == null) return
 
                 // find company name
                 val overviewString = objectMapper.writeValueAsString(overviewSection.data)
                 val overviewList: List<OverviewSection> = objectMapper.readValue(overviewString)
-                val name =
+                val companyName =
                     overviewList.find { it.title == "Asset" || it.title == "Wertpapier" }?.detail?.text ?: ""
+
+                if (documentSection == null) {
+                    println()
+                    logger.warn("No downloadable file available for $companyName yet. Please try again later.")
+                    logger.warn("Reduced expected documents by 1")
+                    documentsExpected--
+                    return
+                }
+
+                // find pdf download url
+                val documentString = objectMapper.writeValueAsString(documentSection.data)
+                val document: DocumentSection? = objectMapper.readValue<List<DocumentSection>>(documentString).firstOrNull()
 
                 documentsReceived++
                 if (document == null) {
@@ -93,7 +101,7 @@ class WebsocketResponseHandler(
                     val date = extractDateFromUrl(document.action.payload as String) ?: "invalid date"
                     fileService.downloadFile(
                         document.action.payload,
-                        fileService.buildFileName(userSession, date, name),
+                        fileService.buildFileName(userSession, date, companyName),
                         DownloadProgress(documentsReceived, documentsExpected)
                     )
                 }
