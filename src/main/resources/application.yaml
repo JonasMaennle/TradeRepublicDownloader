@@ -23,6 +23,7 @@ actions:
     identifier:
       - "SAVINGS_PLAN_EXECUTED"
       - "SAVINGS_PLAN_INVOICE_CREATED"
+      - "trading_savingsplan_executed"
 
   interest:
     id: "Z"
