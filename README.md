@@ -36,7 +36,7 @@ java -jar ./build/libs/'Trade Republic Downloader-1.0.0.jar'
 ```
 You can also create a .exe (which still demands an installed JRE)
 
-The 'Trade Republic Downloader.exe' will be generated in the build folder aswell.
+The 'Trade Republic Downloader.exe' will be generated in the build folder as well.
 ```shell
 .\gradlew createExe
 ```

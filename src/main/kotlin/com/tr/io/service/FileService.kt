@@ -24,15 +24,29 @@ class FileService {
     fun downloadFile(url: String, fileName: String, downloadProgress: DownloadProgress) {
         try {
             val fileUrl = URI(url).toURL()
-            val filePath = folderPath.resolve("$fileName.pdf")
+            val uniqueFileName = getUniqueFileName(folderPath, fileName)
+            val filePath = folderPath.resolve(uniqueFileName)
 
             Files.copy(fileUrl.openStream(), filePath, StandardCopyOption.REPLACE_EXISTING)
             println()
-            logger.info("File '$fileName' downloaded.")
+            logger.info("File '$uniqueFileName' downloaded.")
             logger.info("Downloaded (${downloadProgress.current}/${downloadProgress.total}) file(s) successfully.")
         } catch (e: Exception) {
             logger.error("Error downloading file: ${e.message}")
         }
+    }
+
+    private fun getUniqueFileName(folder: Path, baseName: String): String {
+        var counter = 1
+        var fileName = "$baseName.$FILE_EXTENSION"
+        var filePath = folder.resolve(fileName)
+
+        while (Files.exists(filePath)) {
+            fileName = "${baseName}_$counter.$FILE_EXTENSION"
+            filePath = folder.resolve(fileName)
+            counter++
+        }
+        return fileName
     }
 
     fun buildFileName(userSession: UserSession, date: String, name: String): String {
@@ -76,6 +90,7 @@ class FileService {
 
     companion object {
         private const val FOLDER_NAME = "Trade Republic Downloads"
+        private const val FILE_EXTENSION = "pdf"
         private val logger = LoggerFactory.getLogger(FileService::class.java)
     }
 }
