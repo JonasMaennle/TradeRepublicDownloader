@@ -91,14 +91,12 @@ class WebsocketResponseHandler(
 
                 // find pdf download url
                 val documentString = objectMapper.writeValueAsString(documentSection.data)
-                val document: DocumentSection? = objectMapper.readValue<List<DocumentSection>>(documentString).firstOrNull()
+                val documents: List<DocumentSection> = objectMapper.readValue<List<DocumentSection>>(documentString).filter { it.title.contains(userSession.downloadOption.title.toRegex()) }
+                if (documents.size > 1) documentsExpected += documents.size - 1
 
-                documentsReceived++
-                if (document == null) {
-                    println()
-                    logger.warn("No downloadable PDF found for ${response.id}")
-                } else {
+                documents.forEach { document ->
                     val date = extractDateFromUrl(document.action.payload as String) ?: "invalid date"
+                    documentsReceived++
                     fileService.downloadFile(
                         document.action.payload,
                         fileService.buildFileName(userSession, date, companyName),

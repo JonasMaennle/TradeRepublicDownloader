@@ -13,4 +13,5 @@ class DownloadOption {
     lateinit var id: String
     lateinit var filename: String
     lateinit var identifier: List<String>
+    lateinit var title: String
 }

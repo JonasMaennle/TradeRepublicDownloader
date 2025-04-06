@@ -16,6 +16,7 @@ actions:
     identifier:
       - "ssp_corporate_action_invoice_cash"
       - "CREDIT"
+    title: "Dokumente"
 
   savingsPlan:
     id: "S"
@@ -24,6 +25,7 @@ actions:
       - "SAVINGS_PLAN_EXECUTED"
       - "SAVINGS_PLAN_INVOICE_CREATED"
       - "trading_savingsplan_executed"
+    title: "Abrechnungsausführung"
 
   interest:
     id: "Z"
@@ -31,6 +33,7 @@ actions:
     identifier:
       - "INTEREST_PAYOUT_CREATED"
       - "INTEREST_PAYOUT"
+    title: "Abrechnung"
 
   order:
     id: "O"
@@ -38,3 +41,5 @@ actions:
     identifier:
       - "ORDER_EXECUTED"
       - "TRADE_INVOICE"
+      - "trading_trade_executed"
+    title: "Abrechnung.*"
