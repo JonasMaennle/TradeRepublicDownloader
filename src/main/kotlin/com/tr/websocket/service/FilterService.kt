@@ -18,7 +18,7 @@ class FilterService {
     ) =
         entries
             .filter {
-                userSession.downloadOption.identifier.contains(it.eventType) && isMonthEqual(
+                userSession.downloadOption.identifier.contains(it.subtitle) && isMonthEqual(
                     it.timestamp,
                     userSession.yearMonth
                 )

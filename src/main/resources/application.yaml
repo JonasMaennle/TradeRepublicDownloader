@@ -16,6 +16,8 @@ actions:
     identifier:
       - "ssp_corporate_action_invoice_cash"
       - "CREDIT"
+      - "Bardividende"
+      - "Bardividende korrigiert"
     title: "Dokumente"
 
   savingsPlan:
@@ -25,6 +27,7 @@ actions:
       - "SAVINGS_PLAN_EXECUTED"
       - "SAVINGS_PLAN_INVOICE_CREATED"
       - "trading_savingsplan_executed"
+      - "Sparplan ausgeführt"
     title: "Abrechnungsausführung"
 
   interest:
@@ -33,6 +36,7 @@ actions:
     identifier:
       - "INTEREST_PAYOUT_CREATED"
       - "INTEREST_PAYOUT"
+      - "2 % p.a."
     title: "Abrechnung"
 
   order:
@@ -42,4 +46,5 @@ actions:
       - "ORDER_EXECUTED"
       - "TRADE_INVOICE"
       - "trading_trade_executed"
+      - "Kauforder"
     title: "Abrechnung.*"

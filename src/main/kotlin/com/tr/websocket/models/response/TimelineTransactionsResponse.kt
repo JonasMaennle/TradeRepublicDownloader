@@ -8,7 +8,7 @@ data class TimelineTransactionsResponse(
 data class TimelineTransactionsDetail(
     val id: String,
     val timestamp: String,
-    val eventType: String,
+    val subtitle: String,
 )
 
 data class Cursors(

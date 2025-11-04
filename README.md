@@ -21,7 +21,7 @@ PIN="1234"
 
 Build project with gradle:
 ```shell
-.\gradlew build
+.\gradlew clean build
 ```
 Run Spring Boot app for development:
 ```shell
