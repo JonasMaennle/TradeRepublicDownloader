@@ -29,6 +29,7 @@ dependencies {
 	implementation("com.squareup.okhttp3:okhttp:4.12.0")
 	implementation("io.github.cdimascio:dotenv-kotlin:6.5.0")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	implementation("com.microsoft.playwright:playwright:1.58.0")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")

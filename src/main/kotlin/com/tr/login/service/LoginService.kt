@@ -1,21 +1,26 @@
 package com.tr.login.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.tr.http.service.HttpService
-import com.tr.login.models.LoginRequest
-import com.tr.login.models.LoginResponse
 import com.tr.io.service.UserInputService
+import com.tr.login.models.LoginDataWrapper
+import com.tr.login.service.playwright.PlaywrightService
 import com.tr.utils.readUserConsoleInput
 import com.tr.utils.transformHeaderCookiesToMap
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import java.lang.Exception
+import java.util.function.Consumer
 
 @Service
 class LoginService(
     @Autowired private val httpService: HttpService,
     @Autowired private val userInputService: UserInputService,
+    @Autowired private val playwrightService: PlaywrightService,
+    @Autowired private val objectMapper: ObjectMapper,
 ) {
     @Value("\${tr.api.login:}")
     private lateinit var loginUrl: String
@@ -40,26 +45,33 @@ class LoginService(
             ) { it.length == 4 }
         }
 
-        val loginResponse = httpService.post(
-            loginUrl,
-            LoginResponse::class.java,
-            LoginRequest(phoneNumber, pin),
-        )
-        if (!loginResponse.statusCode.is2xxSuccessful || loginResponse.body == null) throw Exception("Code: ${loginResponse.statusCode.value()} Message: ${loginResponse.body}")
-        perform2FA(loginResponse.body!!)
+        val loginResponse = playwrightService.performTRLogin(phoneNumber, pin)
+        logger.debug("Login Response: " + objectMapper.writeValueAsString(loginResponse))
+        perform2FA(loginResponse)
     }
 
-    private fun perform2FA(loginResponse: LoginResponse) {
+    private fun perform2FA(login: LoginDataWrapper) {
         val twoFACode = readUserConsoleInput(
-            "Please enter the four digit 2FA code you received (valid for ${loginResponse.countdownInSeconds} seconds):",
+            "Please enter the four digit 2FA code you received (valid for ${login.loginResponse.countdownInSeconds} seconds):",
             logger
         ) { it.length == 4 }
-        val twoFAResponse = httpService.post("$loginUrl/${loginResponse.processId}/$twoFACode", Any::class.java)
+
+        val twoFAResponse = httpService.post(
+            "$loginUrl/${login.loginResponse.processId}/$twoFACode",
+            Any::class.java,
+            addWafHeader(login.awsHeaderToken)
+        )
+
         val cookieMap = transformHeaderCookiesToMap(twoFAResponse.headers[COOKIE_IDENTIFIER])
         val sessionToken = cookieMap[SESSION_IDENTIFIER] ?: throw Exception("Invalid Code. No session cookie received")
 
         userInputService.handleUserInput(sessionToken)
     }
+
+    private fun addWafHeader(header: String): Consumer<HttpHeaders> =
+        Consumer { headers ->
+            headers.set("x-aws-waf-token", header)
+        }
 
     companion object {
         private val logger = LoggerFactory.getLogger(LoginService::class.java)

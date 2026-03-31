@@ -28,86 +28,84 @@ class WebsocketResponseHandler(
     private var documentsExpected = 0
     private var documentsReceived = 0
 
-    override fun <T> onResponseReceived(response: T, websocketService: WebsocketService) {
+    override fun onTimelineReceived(response: TimelineTransactionsResponse, websocketService: WebsocketService) {
         val userSession: UserSession = userInputService.userSession
-        when (response) {
-            is TimelineTransactionsResponse -> {
-                logger.debug("Received TimelineTransactionsResponse event")
-                filteredTimelineEventIds.addAll(
-                    filterService.applyTimelineFilter(
-                        response.items,
-                        userSession
-                    )
+
+        logger.debug("Received TimelineTransactionsResponse event")
+        filteredTimelineEventIds.addAll(
+            filterService.applyTimelineFilter(
+                response.items,
+                userSession
+            )
+        )
+
+        // fetch older timeline entries -> one request contains 30 entries
+        if (!response.cursors.after.isNullOrEmpty() && filterService.isTimelineInDateRange(
+                response,
+                userSession
+            )
+        ) {
+            timelineReceivedCounter++
+            websocketService.createNewRequest(TimelineTransactionsRequest(userSession.sessionToken, after = response.cursors.after))
+            return
+        }
+
+        documentsExpected = filteredTimelineEventIds.size
+        if (documentsExpected == 0) {
+            logger.warn("No matching documents found in your timeline")
+            checkForAnotherQuery(userSession.sessionToken)
+        }
+
+        // request detail pages
+        filteredTimelineEventIds.forEach {
+            websocketService.createNewRequest(
+                TimelineDetailRequest(
+                    userSession.sessionToken,
+                    it
                 )
+            )
+        }
+    }
 
-                // fetch older timeline entries -> one request contains 30 entries
-                if (!response.cursors.after.isNullOrEmpty() && filterService.isTimelineInDateRange(
-                        response,
-                        userSession
-                    )
-                ) {
-                    timelineReceivedCounter++
-                    websocketService.createNewRequest(TimelineTransactionsRequest(userSession.sessionToken, after = response.cursors.after))
-                    return
-                }
+    override fun onTimelineEntryReceived(response: TimelineDetailResponse, websocketService: WebsocketService) {
+        val userSession: UserSession = userInputService.userSession
 
-                documentsExpected = filteredTimelineEventIds.size
-                if (documentsExpected == 0) {
-                    logger.warn("No matching documents found in your timeline")
-                    checkForAnotherQuery(userSession.sessionToken)
-                }
+        logger.debug("Received TimelineDetailResponse event")
+        // find matching section
+        val documentSection: Section? = response.sections.find { it.type == "documents" }
+        val overviewSection: Section? = response.sections.find { it.title == "Übersicht" }
+        if (overviewSection == null) return
 
-                // request detail pages
-                filteredTimelineEventIds.forEach {
-                    websocketService.createNewRequest(
-                        TimelineDetailRequest(
-                            userSession.sessionToken,
-                            it
-                        )
-                    )
-                }
-            }
+        // find company name
+        val overviewString = objectMapper.writeValueAsString(overviewSection.data)
+        val overviewList: List<OverviewSection> = objectMapper.readValue(overviewString)
+        val companyName =
+            overviewList.find { it.title == "Asset" || it.title == "Wertpapier" }?.detail?.text ?: ""
 
-            is TimelineDetailResponse -> {
-                logger.debug("Received TimelineDetailResponse event")
-                // find matching section
-                val documentSection: Section? = response.sections.find { it.type == "documents" }
-                val overviewSection: Section? = response.sections.find { it.title == "Übersicht" }
-                if (overviewSection == null) return
+        if (documentSection == null) {
+            println()
+            logger.warn("No downloadable file available for $companyName yet. Please try again later.")
+            logger.warn("Reduced expected documents by 1")
+            documentsExpected--
+            return
+        }
 
-                // find company name
-                val overviewString = objectMapper.writeValueAsString(overviewSection.data)
-                val overviewList: List<OverviewSection> = objectMapper.readValue(overviewString)
-                val companyName =
-                    overviewList.find { it.title == "Asset" || it.title == "Wertpapier" }?.detail?.text ?: ""
+        // find pdf download url
+        val documentString = objectMapper.writeValueAsString(documentSection.data)
+        val documents: List<DocumentSection> = objectMapper.readValue<List<DocumentSection>>(documentString).filter { it.title.contains(userSession.downloadOption.title.toRegex()) }
 
-                if (documentSection == null) {
-                    println()
-                    logger.warn("No downloadable file available for $companyName yet. Please try again later.")
-                    logger.warn("Reduced expected documents by 1")
-                    documentsExpected--
-                    return
-                }
-
-                // find pdf download url
-                val documentString = objectMapper.writeValueAsString(documentSection.data)
-                val documents: List<DocumentSection> = objectMapper.readValue<List<DocumentSection>>(documentString).filter { it.title.contains(userSession.downloadOption.title.toRegex()) }
-                if (documents.size > 1) documentsExpected += documents.size - 1
-
-                documents.forEach { document ->
-                    val date = extractDateFromUrl(document.action.payload as String) ?: "invalid date"
-                    documentsReceived++
-                    fileService.downloadFile(
-                        document.action.payload,
-                        fileService.buildFileName(userSession, date, companyName),
-                        DownloadProgress(documentsReceived, documentsExpected)
-                    )
-                }
-                if (documentsReceived == documentsExpected) {
-                    fileService.openFolder()
-                    checkForAnotherQuery(userSession.sessionToken)
-                }
-            }
+        documents.forEach { document ->
+            val date = extractDateFromUrl(document.action.payload as String) ?: "invalid date"
+            documentsReceived++
+            fileService.downloadFile(
+                document.action.payload,
+                fileService.buildFileName(userSession, date, companyName),
+                DownloadProgress(documentsReceived, documentsExpected)
+            )
+        }
+        if (documentsReceived == documentsExpected) {
+            fileService.openFolder()
+            checkForAnotherQuery(userSession.sessionToken)
         }
     }
 

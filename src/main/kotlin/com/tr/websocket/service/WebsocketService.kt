@@ -57,13 +57,27 @@ class WebsocketService(
             for (targetClass in TARGET_CLASSES) {
                 try {
                     val response = objectMapper.readValue(data, targetClass)
-                    websocketCallback.onResponseReceived(response, this)
+                    dispatchResponse(response)
                     break
                 } catch (_: Exception) {
                 } finally {
                     logger.trace(data)
                 }
             }
+        }
+    }
+
+    private fun dispatchResponse(response: WebsocketResponse) {
+        when (response) {
+
+            is TimelineDetailResponse ->
+                websocketCallback.onTimelineEntryReceived(response, this)
+
+            is TimelineTransactionsResponse ->
+                websocketCallback.onTimelineReceived(response, this)
+
+            else ->
+                logger.error("Unknown websocket response type: ${response::class}")
         }
     }
 
