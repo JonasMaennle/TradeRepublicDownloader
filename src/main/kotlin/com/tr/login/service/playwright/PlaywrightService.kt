@@ -4,44 +4,89 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.microsoft.playwright.*
 import com.microsoft.playwright.options.AriaRole
-import com.tr.login.models.LoginResponse
-import com.tr.login.models.LoginDataWrapper
+import com.tr.login.models.LoginSession
+import com.tr.login.models.ProcessResponse
 import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
 class PlaywrightService(
     @Autowired private val objectMapper: ObjectMapper,
 ) {
+    @Value("\${tr.api.login:}")
+    private lateinit var loginUrl: String
+
     private lateinit var playwright: Playwright
     private lateinit var browser: Browser
 
-    fun performTRLogin(phoneNumber: String, pin: String): LoginDataWrapper {
+    fun performLogin(phoneNumber: String, pin: String): LoginSession {
         startPlaywright()
+
         val context = browser.newContext()
         val page = context.newPage()
 
-        try {
-            page.navigate("https://app.traderepublic.com/login")
+        page.navigate(loginUrl)
 
-            enterPhone(page, phoneNumber)
+        enterPhone(page, phoneNumber)
 
-            val loginResponse = page.waitForResponse(
+        val loginResponse = page.waitForResponse(
+            { response ->
+                response.url().contains("/api/v2/auth/web/login") &&
+                        !response.url().contains("/processes/") &&
+                        response.request().method() == "POST"
+            }
+        ) {
+            enterPin(page, pin)
+        }
+
+        val body = loginResponse.text()
+        logger.debug("Login response: $body")
+
+        val processResponse = objectMapper.readValue<ProcessResponse>(body)
+        val processId = processResponse.processId
+
+        waitForConfirmation(page, processId)
+
+        return LoginSession(
+            trSession = extractTrSession(context)
+        )
+    }
+
+    private fun extractTrSession(context: BrowserContext): String {
+        val cookies = context.cookies()
+        cookies.forEach {
+            logger.debug("${it.name}=${it.value}")
+        }
+        val trSession = cookies.first { it.name == "tr_session" }.value ?: throw IllegalStateException("No tr_session cookie found")
+        shutdown()
+        return trSession
+    }
+
+    private fun waitForConfirmation(
+        page: Page,
+        processId: String
+    ) {
+        while (true) {
+            val response = page.waitForResponse(
                 { response ->
-                    response.url().contains("/api/v1/auth/web/login") &&
-                            response.request().method() == "POST"
+                    response.url()
+                        .contains("/api/v2/auth/web/login/processes/$processId") &&
+                            response.request().method() == "GET"
                 }
             ) {
-                enterPin(page, pin)
+                // no-op
             }
 
-            logger.debug("Login data: " + loginResponse.text())
-            val loginData = objectMapper.readValue<LoginResponse>(loginResponse.text())
-            return LoginDataWrapper(loginData, loginResponse.request().headers()["x-aws-waf-token"] ?: "")
-        } finally {
-            shutdown()
+            val body = response.text()
+            logger.debug("Polling response: $body")
+
+            if (body.contains("CONFIRMED")) {
+                logger.info("Login confirmed")
+                return
+            }
         }
     }
 
