@@ -1,8 +1,6 @@
 package com.tr.io.service
 
 import com.tr.io.models.DownloadProgress
-import com.tr.io.models.UserSession
-import com.tr.utils.transformDate
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -47,13 +45,6 @@ class FileService {
             counter++
         }
         return fileName
-    }
-
-    fun buildFileName(userSession: UserSession, date: String, name: String): String {
-        val filenameTemplate = userSession.downloadOption.filename
-        return filenameTemplate
-            .replace("\$DATE", transformDate(date))
-            .replace("\$NAME", name)
     }
 
     fun openFolder() {

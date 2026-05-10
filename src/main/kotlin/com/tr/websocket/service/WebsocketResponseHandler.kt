@@ -1,15 +1,14 @@
 package com.tr.websocket.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.tr.io.models.DownloadProgress
 import com.tr.io.service.FileService
 import com.tr.io.models.UserSession
 import com.tr.io.service.UserInputService
-import com.tr.utils.extractDateFromUrl
+import com.tr.websocket.models.TimelineDetails
 import com.tr.websocket.models.request.TimelineDetailRequest
 import com.tr.websocket.models.request.TimelineTransactionsRequest
 import com.tr.websocket.models.response.*
+import com.tr.websocket.service.timelinedetail.TimelineEventDispatcher
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
@@ -18,9 +17,9 @@ import org.springframework.stereotype.Service
 @Service
 class WebsocketResponseHandler(
     @Autowired private val filterService: FilterService,
-    @Autowired private val objectMapper: ObjectMapper,
     @Autowired private val fileService: FileService,
     @Autowired @Lazy private val userInputService: UserInputService,
+    @Autowired private val dispatcher: TimelineEventDispatcher,
 ) : WebsocketCallback<WebsocketResponse> {
 
     private val filteredTimelineEventIds: MutableList<String> = mutableListOf()
@@ -46,7 +45,12 @@ class WebsocketResponseHandler(
             )
         ) {
             timelineReceivedCounter++
-            websocketService.createNewRequest(TimelineTransactionsRequest(userSession.sessionToken, after = response.cursors.after))
+            websocketService.createNewRequest(
+                TimelineTransactionsRequest(
+                    userSession.sessionToken,
+                    after = response.cursors.after
+                )
+            )
             return
         }
 
@@ -70,39 +74,29 @@ class WebsocketResponseHandler(
     override fun onTimelineEntryReceived(response: TimelineDetailResponse, websocketService: WebsocketService) {
         val userSession: UserSession = userInputService.userSession
 
-        logger.debug("Received TimelineDetailResponse event")
-        // find matching section
-        val documentSection: Section? = response.sections.find { it.type == "documents" }
-        val overviewSection: Section? = response.sections.find { it.title == "Übersicht" }
-        if (overviewSection == null) return
+        val timelineDetails: TimelineDetails = dispatcher.dispatch(response, userSession)
 
-        // find company name
-        val overviewString = objectMapper.writeValueAsString(overviewSection.data)
-        val overviewList: List<OverviewSection> = objectMapper.readValue(overviewString)
-        val companyName =
-            overviewList.find { it.title == "Asset" || it.title == "Wertpapier" }?.detail?.text ?: ""
-
-        if (documentSection == null) {
-            println()
-            logger.warn("No downloadable file available for $companyName yet. Please try again later.")
+        if (timelineDetails.fileName.isEmpty) {
+            logger.warn("No downloadable file available for id ${response.id} yet. Please try again later.")
             logger.warn("Reduced expected documents by 1")
             documentsExpected--
             return
         }
 
-        // find pdf download url
-        val documentString = objectMapper.writeValueAsString(documentSection.data)
-        val documents: List<DocumentSection> = objectMapper.readValue<List<DocumentSection>>(documentString).filter { it.title.contains(userSession.downloadOption.title.toRegex()) }
-
-        documents.forEach { document ->
-            val date = extractDateFromUrl(document.action.payload as String) ?: "invalid date"
-            documentsReceived++
-            fileService.downloadFile(
-                document.action.payload,
-                fileService.buildFileName(userSession, date, companyName),
-                DownloadProgress(documentsReceived, documentsExpected)
-            )
+        if (timelineDetails.downloadUrl.isNullOrEmpty()) {
+            logger.warn("No downloadable file available for ${timelineDetails.fileName} yet. Please try again later.")
+            logger.warn("Reduced expected documents by 1")
+            documentsExpected--
+            return
         }
+
+        documentsReceived++
+        fileService.downloadFile(
+            timelineDetails.downloadUrl,
+            timelineDetails.fileName.get(),
+            DownloadProgress(documentsReceived, documentsExpected)
+        )
+
         if (documentsReceived == documentsExpected) {
             fileService.openFolder()
             checkForAnotherQuery(userSession.sessionToken)
