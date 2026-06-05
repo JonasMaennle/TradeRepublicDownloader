@@ -5,6 +5,7 @@ import com.tr.utils.isMonthEqual
 import com.tr.websocket.models.response.TimelineTransactionsDetail
 import com.tr.websocket.models.response.TimelineTransactionsResponse
 import org.springframework.stereotype.Service
+import org.springframework.util.StringUtils
 import java.time.YearMonth
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -17,6 +18,7 @@ class FilterService {
         userSession: UserSession,
     ) =
         entries
+            .filter { StringUtils.hasText(it.subtitle) }
             .filter {
                 userSession.downloadOption.identifier.contains(it.subtitle) && isMonthEqual(
                     it.timestamp,
