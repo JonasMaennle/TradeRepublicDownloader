@@ -3,7 +3,7 @@ package com.tr.login.service.playwright
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.microsoft.playwright.*
-import com.microsoft.playwright.options.AriaRole
+import com.microsoft.playwright.options.WaitForSelectorState
 import com.tr.login.models.LoginSession
 import com.tr.login.models.ProcessResponse
 import jakarta.annotation.PreDestroy
@@ -23,6 +23,7 @@ class PlaywrightService(
     private lateinit var browser: Browser
 
     fun performLogin(phoneNumber: String, pin: String): LoginSession {
+        logger.info("Initialize login...")
         startPlaywright()
 
         val context = browser.newContext()
@@ -30,25 +31,33 @@ class PlaywrightService(
 
         page.navigate(loginUrl)
 
-        enterPhone(page, phoneNumber)
+        page.locator("input[name='username']")
+            .fill(phoneNumber)
 
-        val loginResponse = page.waitForResponse(
-            { response ->
-                response.url().contains("/api/v2/auth/web/login") &&
-                        !response.url().contains("/processes/") &&
-                        response.request().method() == "POST"
+        page.locator("input[type='password']")
+            .fill(pin)
+
+        val submitButton = page.locator("button[type='submit']")
+
+        submitButton.waitFor(
+            Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+        )
+
+        val loginResponse = page.waitForRequest(
+            { request ->
+                request.url().contains("/api/v2/auth/web/login") &&
+                        request.method() == "POST"
             }
         ) {
-            enterPin(page, pin)
+            submitButton.click()
         }
 
-        val body = loginResponse.text()
+        val body = loginResponse.response().text()
         logger.debug("Login response: $body")
 
         val processResponse = objectMapper.readValue<ProcessResponse>(body)
-        val processId = processResponse.processId
-
-        waitForConfirmation(page, processId)
+        waitForConfirmation(page, processResponse.processId)
 
         return LoginSession(
             trSession = extractTrSession(context)
@@ -96,38 +105,6 @@ class PlaywrightService(
         browser = playwright.chromium().launch(
             BrowserType.LaunchOptions()
                 .setHeadless(false)
-        )
-    }
-
-    private fun enterPhone(page: Page, phoneNumber: String) {
-        // handle cookie banner
-        val cookieButton = page.getByRole(
-            AriaRole.BUTTON,
-            Page.GetByRoleOptions().setName("Auswahl speichern")
-        )
-        if (cookieButton.isVisible) {
-            cookieButton.click()
-        }
-
-        // enter number
-        val phoneInput = page.locator("#loginPhoneNumber__input")
-        phoneInput.waitFor()
-        phoneInput.fill(phoneNumber)
-
-        page.getByRole(
-            AriaRole.BUTTON,
-            Page.GetByRoleOptions().setName("Weiter")
-        ).click()
-    }
-
-    private fun enterPin(page: Page, pin: String) {
-        val pinField = page.locator("#loginPin__input")
-        pinField.waitFor()
-        pinField.click()
-        pinField.pressSequentially(
-            pin,
-            Locator.PressSequentiallyOptions()
-                .setDelay(30.0)
         )
     }
 
