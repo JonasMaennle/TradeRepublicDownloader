@@ -7,7 +7,7 @@ import com.tr.websocket.models.TimelineEventType
 import java.util.*
 
 interface TimelineDetailEventService {
-    fun parseEvent(event: TimelineDetailResponse, userSession: UserSession): TimelineDetails
+    fun parseEvent(event: TimelineDetailResponse, userSession: UserSession, date: String?): TimelineDetails
 
     fun type(): TimelineEventType
 

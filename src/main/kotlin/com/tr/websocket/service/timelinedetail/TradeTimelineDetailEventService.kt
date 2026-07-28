@@ -10,13 +10,9 @@ import org.springframework.stereotype.Service
 @Service
 class TradeTimelineDetailEventService : TimelineDetailEventService {
 
-    override fun parseEvent(event: TimelineDetailResponse, userSession: UserSession): TimelineDetails {
+    override fun parseEvent(event: TimelineDetailResponse, userSession: UserSession, date: String?): TimelineDetails {
         val documentsSection = event.sections.find {
             it.title == "Dokumente"
-        }
-
-        val headerSection = event.sections.find {
-            it.type == "header"
         }
 
         val overviewSection = event.sections.find {
@@ -29,12 +25,6 @@ class TradeTimelineDetailEventService : TimelineDetailEventService {
                 ?.get(0)
                 ?.get("action")
                 ?.get("payload")
-                ?.asText()
-
-        val date =
-            headerSection
-                ?.data
-                ?.get("timestamp")
                 ?.asText()
 
         val companyName =

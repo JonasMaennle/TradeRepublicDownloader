@@ -8,6 +8,7 @@ data class TimelineTransactionsResponse(
 data class TimelineTransactionsDetail(
     val id: String,
     val timestamp: String,
+    val title: String,
     val subtitle: String?,
 )
 

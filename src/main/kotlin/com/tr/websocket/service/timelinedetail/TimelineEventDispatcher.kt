@@ -13,12 +13,12 @@ class TimelineEventDispatcher(
     private val handlersByType =
         handlers.associateBy { it.type() }
 
-    fun dispatch(event: TimelineDetailResponse, userSession: UserSession): TimelineDetails {
+    fun dispatch(event: TimelineDetailResponse, userSession: UserSession, date: String?): TimelineDetails {
 
         val handler = handlersByType[getType(userSession)]
             ?: error("No handler for ${TimelineEventType.INTEREST}")
 
-        return handler.parseEvent(event, userSession)
+        return handler.parseEvent(event, userSession, date)
     }
 
     private fun getType(userSession: UserSession): TimelineEventType {

@@ -7,6 +7,8 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
+private val timestampFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+
 fun isMonthValid(dateString: String): Boolean {
     val formatter = DateTimeFormatter.ofPattern(TimeFormatPattern.PARTIAL.patternString)
     return try {
@@ -34,7 +36,6 @@ fun String.toYearMonth(): YearMonth =
 fun isMonthEqual(dateString: String?, selectedMonth: YearMonth): Boolean {
     if (dateString.isNullOrEmpty()) return false
     return try {
-        val timestampFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
         val receivedDate = ZonedDateTime.parse(dateString, timestampFormatter)
         val receivedYearMonth = YearMonth.of(receivedDate.year, receivedDate.monthValue)
         return selectedMonth == receivedYearMonth
@@ -42,3 +43,8 @@ fun isMonthEqual(dateString: String?, selectedMonth: YearMonth): Boolean {
         false
     }
 }
+
+fun String.toIsoDate(): String =
+    ZonedDateTime.parse(this, timestampFormatter)
+        .toLocalDate()
+        .toString()

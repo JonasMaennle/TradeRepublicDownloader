@@ -10,13 +10,9 @@ import org.springframework.stereotype.Service
 @Service
 class InterestTimelineDetailEventService: TimelineDetailEventService {
 
-    override fun parseEvent(event: TimelineDetailResponse, userSession: UserSession): TimelineDetails {
+    override fun parseEvent(event: TimelineDetailResponse, userSession: UserSession, date: String?): TimelineDetails {
         val documentsSection = event.sections.find {
             it.title == "Dokumente"
-        }
-
-        val headerSection = event.sections.find {
-            it.type == "header"
         }
 
         val downloadUrl =
@@ -26,12 +22,6 @@ class InterestTimelineDetailEventService: TimelineDetailEventService {
                 ?.get("action")
                 ?.get("payload")
                 ?.get("path")
-                ?.asText()
-
-        val date =
-            headerSection
-                ?.data
-                ?.get("timestamp")
                 ?.asText()
 
         if (downloadUrl.isNullOrEmpty()) {

@@ -4,6 +4,7 @@ import com.tr.io.models.DownloadProgress
 import com.tr.io.service.FileService
 import com.tr.io.models.UserSession
 import com.tr.io.service.UserInputService
+import com.tr.utils.toIsoDate
 import com.tr.websocket.models.TimelineDetails
 import com.tr.websocket.models.request.TimelineDetailRequest
 import com.tr.websocket.models.request.TimelineTransactionsRequest
@@ -26,6 +27,7 @@ class WebsocketResponseHandler(
     private var timelineReceivedCounter = 0
     private var documentsExpected = 0
     private var documentsReceived = 0
+    private val dateLookupMap: MutableMap<String, String?> = mutableMapOf()
 
     override fun onTimelineReceived(response: TimelineTransactionsResponse, websocketService: WebsocketService) {
         val userSession: UserSession = userInputService.userSession
@@ -37,6 +39,13 @@ class WebsocketResponseHandler(
                 userSession
             )
         )
+
+        // fill date look-up map
+        filteredTimelineEventIds.forEach {
+            dateLookupMap[it] =
+                response.items.find { item -> item.id == it }?.timestamp?.toIsoDate()
+        }
+
 
         // fetch older timeline entries -> one request contains 30 entries
         if (!response.cursors.after.isNullOrEmpty() && filterService.isTimelineInDateRange(
@@ -73,8 +82,9 @@ class WebsocketResponseHandler(
 
     override fun onTimelineEntryReceived(response: TimelineDetailResponse, websocketService: WebsocketService) {
         val userSession: UserSession = userInputService.userSession
+        val date = dateLookupMap[response.id]
 
-        val timelineDetails: TimelineDetails = dispatcher.dispatch(response, userSession)
+        val timelineDetails: TimelineDetails = dispatcher.dispatch(response, userSession, date)
 
         if (timelineDetails.fileName.isEmpty) {
             logger.warn("No downloadable file available for id ${response.id} yet. Please try again later.")
@@ -110,6 +120,7 @@ class WebsocketResponseHandler(
 
     private fun resetProperties() {
         filteredTimelineEventIds.clear()
+        dateLookupMap.clear()
         timelineReceivedCounter = 0
         documentsExpected = 0
         documentsReceived = 0

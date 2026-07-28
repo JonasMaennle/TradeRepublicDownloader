@@ -37,6 +37,7 @@ actions:
       - "INTEREST_PAYOUT_CREATED"
       - "INTEREST_PAYOUT"
       - "2 % p.a."
+      - "Zinsen"
     title: "Bescheinigung"
 
   order:
